@@ -1,2 +1,2 @@
-# goodbites
+# Good Bites
 Smart meal planner

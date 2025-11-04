@@ -2,4 +2,5 @@
 Smart meal planner
 
 Team Members
-Francisco Mata
+- Francisco Mata
+- Sara Latorre

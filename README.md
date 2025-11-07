@@ -46,6 +46,7 @@ The **Good Bites** is a meal planning platform that aims to help users plan thei
 
 ## 👨‍💻 Team Members with Favorite Quotes
 - Francisco Mata : 
+        "Life is 10% what happens to you and 90% how you react to it." - Charles R. Swindoll
 - Sara Latorre : 
         "The world is indeed full of peril, and in it there are many dark places; but still there is much that is fair, and though in all lands love is now mingled with grief, it grows perhaps the greater." ― J.R.R. Tolkien
 - Vincent Jularbal :

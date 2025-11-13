@@ -1,0 +1,41 @@
+{
+  "userId": "111111",
+  "username": "username1",
+  "email": "user@gmail.com",
+  "createdAt": 
+    { "seconds": 1731315798, "nanoseconds": 0 }
+    ,
+  "favorites": {
+    "meal1": {
+      "id": "1",
+      "name": "spaghetti bolognese"
+    },
+    "meal2": {
+      "id": "2",
+      "name": "chicken salad"
+    }
+  },
+  "meals": {
+    "week-2025-11-10": {
+      "weekId": "week-2025-11-10",
+      "meals": {
+        "monday": [
+          { "id": "1", "name": "spaghetti bolognese" },
+          { "id": "3", "name": "grilled salmon" }
+        ],
+        "tuesday": [
+          { "id": "2", "name": "chicken salad" }
+        ],
+        "wednesday": [],
+        "thursday": [
+          { "id": "4", "name": "beef stir fry" }
+        ],
+        "friday": [],
+        "saturday": [],
+        "sunday": [
+          { "id": "5", "name": "pizza" }
+        ]
+      }
+    }
+  }
+}

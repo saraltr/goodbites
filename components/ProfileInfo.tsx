@@ -44,7 +44,7 @@ export default function ProfileInfo() {
 
     const fetchUser = async () => {
       try {
-        const docRef = doc(db, "users", id);
+        const docRef = doc(db!, "users", id);
         const userSnap = await getDoc(docRef);
 
         // if user document exists, update local state
@@ -66,7 +66,7 @@ export default function ProfileInfo() {
 
   // handle logout and redirect to home
   const handleLogout = async (): Promise<void> => {
-    await auth.signOut();
+    await auth!.signOut();
     router.push("/");
   };
 
@@ -77,7 +77,7 @@ export default function ProfileInfo() {
 
     try {
       // update username and email in firestore
-      const userRef = doc(db, "users", id);
+      const userRef = doc(db!, "users", id);
       await updateDoc(userRef, {
         username: newUsername,
         email: newEmail,

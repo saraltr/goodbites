@@ -23,6 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // subscribe to firebase auth state changes on mount
   useEffect(() => {
+    if (!auth) throw new Error("Firebase Auth not initialized");
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user); // update user state
       setLoading(false); // finished checking
@@ -32,8 +33,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+  if (!auth) return; // safety check
+  
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    setUser(user);
+    setLoading(false);
+  });
+
+  return unsubscribe;
+}, []);
+
+
   // function to login user with email and password
   const login = async (email: string, password: string) => {
+    if (!auth) throw new Error("Firebase Auth not initialized");
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     // update user state after login
     setUser(userCredential.user);
@@ -42,6 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // function to logout current user
   const logout = async () => {
+    if (!auth) throw new Error("Firebase Auth not initialized");
     await signOut(auth);
     setUser(null);
   };

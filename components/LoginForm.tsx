@@ -28,6 +28,10 @@ export default function LoginForm() {
     try {
       setLoading(true);
 
+      if (!auth) {
+        throw new Error("Firebase Auth not initialized. This should run on the client.");
+      }
+
       // log in user
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;

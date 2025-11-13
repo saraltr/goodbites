@@ -44,14 +44,14 @@ export default function RegisterForm() {
       setLoading(true);
 
       // create user with firebase auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth!, email, password);
       const user = userCredential.user;
 
       // update display name in firebase auth
       await updateProfile(user, { displayName: username });
 
       // create user document in firestore
-      await setDoc(doc(db, "users", user.uid), {
+      await setDoc(doc(db!, "users", user.uid), {
         username,
         email: user.email,
         createdAt: serverTimestamp(),

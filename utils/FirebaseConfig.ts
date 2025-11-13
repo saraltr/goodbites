@@ -15,14 +15,18 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
 
+let auth;
+let db;
 let analytics;
+
+// only initialize Firebase services that require window, client-side
 if (typeof window !== "undefined") {
+  auth = getAuth(app);
+  db = getFirestore(app);
   analytics = getAnalytics(app);
 }
-export { analytics };
 
+export { app, auth, db, analytics };
 // debug
 // console.log("Firebase Project ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);

@@ -1,0 +1,24 @@
+.group {
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  transition: border-color 0.3s ease;
+}
+
+.input:focus {
+  border-color: #58B65C;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(88, 182, 92, 0.2);
+}

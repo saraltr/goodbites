@@ -4,21 +4,22 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
-// redirect users to their own profile or to the login page 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        router.replace(`/profile/${user.uid}`);
-      } else {
-        router.replace("/login");
-      }
+    // The middleware already protects this page, so we can expect a user to be logged in.
+    // This page just redirects to the user's specific profile page.
+    if (!loading && user) {
+      router.replace(`/profile/${user.uid}`);
     }
   }, [user, loading, router]);
 
-  //  redirecting
-  return null;
+  // Show a loading state while we wait for the user object and redirect.
+  return (
+    <div className="flex justify-center items-center min-h-screen">
+      <p className="text-lg">Loading profile...</p>
+    </div>
+  );
 }

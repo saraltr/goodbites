@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const session = req.cookies.get('__session');
   const { pathname } = req.nextUrl;
   const url = req.nextUrl.clone();

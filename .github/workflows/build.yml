@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+      - sara
+      - Vince
+      - frank
+      - auth_middleware
   pull_request:
 
 jobs:

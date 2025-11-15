@@ -33,17 +33,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  useEffect(() => {
-  if (!auth) return; // safety check
-  
-  const unsubscribe = onAuthStateChanged(auth, (user) => {
-    setUser(user);
-    setLoading(false);
-  });
-
-  return unsubscribe;
-}, []);
-
 
   // function to login user with email and password
   const login = async (email: string, password: string) => {

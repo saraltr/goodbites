@@ -7,6 +7,13 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const url = req.nextUrl.clone();
 
+  // protected route prefixes
+  const protectedRoutes = ["/profile"];
+
+  // check if the route is protected
+  const isProtected = protectedRoutes.some(prefix => pathname.startsWith(prefix));
+
+
   // If there is a session cookie, verify it
   if (session) {
     try {
@@ -16,34 +23,35 @@ export async function proxy(req: NextRequest) {
         body: JSON.stringify({ sessionCookie: session.value }),
       });
 
-      // If the session is invalid, delete the cookie and redirect to login
+      // invalid session
       if (!response.ok) {
-        url.pathname = '/login';
-        const res = NextResponse.redirect(url);
-        res.cookies.delete('__session');
+        const res = NextResponse.redirect(`${req.nextUrl.origin}/login`);
+        res.cookies.delete("__session");
         return res;
       }
 
       // If the user is logged in and tries to access login or register, redirect to profile
       if (pathname === '/login' || pathname === '/register') {
-        url.pathname = '/profile';
-        return NextResponse.redirect(url);
+        return NextResponse.redirect(`${req.nextUrl.origin}/profile`);
       }
+      
+      return NextResponse.next();
+
     } catch (error) {
       // If the verification API fails, redirect to login
-      url.pathname = '/login';
-      const res = NextResponse.redirect(url);
+      const res = NextResponse.redirect('/login');
       res.cookies.delete('__session');
+      console.error(error);
       return res;
     }
-  } else {
-    // If the user is not logged in and tries to access a protected route, redirect to login
-    if (pathname.startsWith('/profile') || pathname === '/') {
-      url.pathname = '/login';
-      return NextResponse.redirect(url);
-    }
+  } 
+
+  // only block protected routes
+  if (isProtected) {
+    return NextResponse.redirect(`${req.nextUrl.origin}/login`);
   }
 
+  // allow public routes
   return NextResponse.next();
 }
 

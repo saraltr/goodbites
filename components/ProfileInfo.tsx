@@ -66,8 +66,17 @@ export default function ProfileInfo() {
 
   // handle logout and redirect to home
   const handleLogout = async (): Promise<void> => {
+    try {
+    // call api route to delete session cookie
+    await fetch("/api/auth/logout", { method: "POST" });
+
+    // also sign out client auth
     await auth!.signOut();
+
     router.push("/");
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
   };
 
   // handle saving updated profile info

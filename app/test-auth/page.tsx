@@ -1,10 +1,26 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { signOut } from "firebase/auth";
+import { auth } from "@/utils/FirebaseConfig";
 
 // testing auth state across the app
 export default function TestAuth() {
   const { user, loading } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth!);
+
+      // 2️⃣ Clear server session cookie
+      document.cookie = "__session=; path=/; max-age=0";
+
+      // 3️⃣ Redirect to login page
+      window.location.href = "/login";
+    } catch (err) {
+      console.error("Failed to log out:", err);
+    }
+  };
 
   if (loading)
     return (
@@ -23,6 +39,12 @@ export default function TestAuth() {
           <p className="text-gray-700 mb-4">
             Welcome, {user.displayName || user.email}!
           </p>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+          >
+            Logout
+          </button>
         </>
       ) : (
         <>

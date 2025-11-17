@@ -36,8 +36,23 @@ export default function LoginForm() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // redirect to their own profile page
+      // get Firebase ID token
+      const idToken = await user.getIdToken();
+
+      // send ID token to backend to create session cookie
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create session cookie");
+      }
+
+      // allow access to the user profile
       router.replace(`/profile/${user.uid}`);
+
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
       else setError("An unknown error occurred");

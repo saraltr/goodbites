@@ -2,33 +2,51 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import ReviewList from "@/components/ReviewList";
+import ReviewForm from "@/components/ReviewForm";
 
 export default function RecipeDetail() {
   const { id } = useParams();
   const [recipe, setRecipe] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchRecipe = async () => {
+    const fetchRecipeAndReviews = async () => {
       try {
-        const response = await fetch(`/api/recipe/${id}`);
-        const data = await response.json();
+        // Fetch recipe
+        const recipeResponse = await fetch(`/api/recipe/${id}`);
+        const recipeData = await recipeResponse.json();
 
-        if (!response.ok || !data || data.message === "Recipe not found") {
+        if (!recipeResponse.ok || !recipeData || recipeData.message === "Recipe not found") {
           setError("Recipe not found. Please try another one.");
-        } else {
-          setRecipe(data);
+          setLoading(false);
+          return;
+        }
+        setRecipe(recipeData);
+
+        // Fetch reviews
+        const reviewsResponse = await fetch(`/api/recipes/${id}/reviews`);
+        const reviewsData = await reviewsResponse.json();
+        if (reviewsResponse.ok) {
+          setReviews(reviewsData);
         }
       } catch (err) {
-        console.error("Error fetching recipe:", err);
+        console.error("Error fetching recipe details or reviews:", err);
         setError("Unable to load recipe details.");
       }
       setLoading(false);
     };
 
-    if (id) fetchRecipe();
+    if (id) fetchRecipeAndReviews();
   }, [id]);
+
+  const handleReviewSubmit = (newReview) => {
+    // The createdAt from server is a timestamp object, but the one from the POST response might not be.
+    // The ReviewList component has a fallback for this.
+    setReviews((prevReviews) => [newReview, ...prevReviews]);
+  };
 
   if (loading)
     return (
@@ -58,15 +76,15 @@ export default function RecipeDetail() {
         </h1>
 
         {/* Recipe Image */}
-<img
-  src={
-    recipe.strMealThumb && recipe.strMealThumb.trim() !== ""
-      ? recipe.strMealThumb
-      : "/images/placeholder-food.jpg"
-  }
-  alt={recipe.strMeal || "Recipe image"}
-  className="w-full max-h-[400px] object-cover rounded-xl shadow mb-6"
-/>
+        <img
+          src={
+            recipe.strMealThumb && recipe.strMealThumb.trim() !== ""
+              ? recipe.strMealThumb
+              : "/images/placeholder-food.jpg"
+          }
+          alt={recipe.strMeal || "Recipe image"}
+          className="w-full max-h-[400px] object-cover rounded-xl shadow mb-6"
+        />
 
         <p className="text-gray-700 mb-6">{recipe.strInstructions}</p>
 
@@ -109,6 +127,11 @@ export default function RecipeDetail() {
           >
             ← Back to Recipes
           </a>
+        </div>
+
+        <div className="mt-8 border-t pt-8">
+          <ReviewList reviews={reviews} />
+          <ReviewForm recipeId={id} onReviewSubmit={handleReviewSubmit} />
         </div>
       </div>
     </main>

@@ -55,3 +55,48 @@ export interface MealsWeekDoc {
   weekId: string;
   meals: WeekMeals;
 }
+
+// meal details for meal generator
+export interface MealDetails {
+  idMeal: string;
+  strMeal: string;
+  strMealThumb: string;
+  estimatedCost?: number | string;
+  nutrition: {
+    calories: number;
+    protein: number;
+    fat: number;
+  };
+  category?: string;
+  area?: string;
+  instructions?: string;
+  tags?: string;
+}
+
+
+export interface MealResult {
+  // original recipe ID
+  originalId: string;
+
+  // unique instance ID
+  id: string;
+
+  key: string;
+  title: string;
+  image: string;
+  cost: number;
+  nutrition: {
+    calories: number;
+    protein: number;
+    fat: number;
+  };
+  ingredients: string[];
+  reusedIngredients: string[];
+  isFresh: boolean;
+  seasonalScore: number;
+
+  isRepeat: boolean;
+  repeatCount: number;
+  repeatMessage?: string;
+  includeSeasonal?: boolean;
+}

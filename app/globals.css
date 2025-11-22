@@ -24,3 +24,20 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+.custom-btn {
+  background-color: #008236 !important;
+  border-color: #008236 !important;
+  color: #fff !important;
+}
+
+.custom-btn:hover {
+  background-color: #006f29 !important;
+  border-color: #006f29 !important;
+}
+
+.custom-btn:active {
+  background-color: #004d1f !important;
+  border-color: #004d1f !important;
+}

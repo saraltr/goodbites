@@ -43,10 +43,18 @@ export default function RecipeDetail() {
   }, [id]);
 
   const handleReviewSubmit = (newReview) => {
-    // The createdAt from server is a timestamp object, but the one from the POST response might not be.
-    // The ReviewList component has a fallback for this.
-    setReviews((prevReviews) => [newReview, ...prevReviews]);
-  };
+  setReviews((prev) => {
+    const updated = [newReview, ...prev];
+
+    // ensure correct ordering
+    return updated.sort((a, b) => {
+      const dateA = a.createdAt?._seconds ?? a.createdAt ?? 0;
+      const dateB = b.createdAt?._seconds ?? b.createdAt ?? 0;
+      return dateB - dateA; // newest first
+    });
+  });
+};
+
 
   if (loading)
     return (

@@ -3,11 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import StarRating from './StarRating';
-
-interface ReviewFormProps {
-  recipeId: string;
-  onReviewSubmit: (newReview: any) => void;
-}
+import { ReviewFormProps} from '@/lib/types';
 
 export default function ReviewForm({ recipeId, onReviewSubmit }: ReviewFormProps) {
   const { user } = useAuth();
@@ -15,6 +11,10 @@ export default function ReviewForm({ recipeId, onReviewSubmit }: ReviewFormProps
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const getErrorMessage = (err: unknown) => {
+    return err instanceof Error ? err.message : "An unexpected error occurred.";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,8 +48,8 @@ export default function ReviewForm({ recipeId, onReviewSubmit }: ReviewFormProps
       onReviewSubmit(newReview);
       setRating(0);
       setComment('');
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
@@ -65,7 +65,7 @@ export default function ReviewForm({ recipeId, onReviewSubmit }: ReviewFormProps
 
   return (
     <div className="mt-8">
-      <h3 className="text-xl font-semibold mb-4">Leave a Review</h3>
+      <h3 className="text-xl text-[#2e7d32] font-semibold mb-4">Leave a Review</h3>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-gray-700 mb-2">Your Rating</label>

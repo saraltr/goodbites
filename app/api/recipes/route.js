@@ -1,4 +1,3 @@
-// app/api/recipes/route.js
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
@@ -48,10 +47,33 @@ function calculateCost(meal) {
 }
 
 function calculateNutrition(meal) {
-  const calories = 150 + Math.floor(Math.random() * 200);
-  return {
-    calories,
-    protein: Math.floor(calories / 12),
-    fat: Math.floor(calories / 18),
-  };
+  const title = meal.strMeal.toLowerCase(); // use meal name
+
+  let calories = 0;
+  let protein = 0;
+  let fat = 0;
+
+  if (/chicken|pork|beef|lamb|fish|seafood|goat|duck/.test(title)) {
+    calories = 600;  // average main protein meal
+    protein = 35;    
+    fat = 20;
+  } else if (/pasta|rice|potato|fettuccine/.test(title)) {
+    calories = 550; 
+    protein = 18; 
+    fat = 15;
+  } else if (/vegetarian|vegan|stew|curry|legumes|tofu|salad/.test(title)) {
+    calories = 400; 
+    protein = 15; 
+    fat = 12;
+  } else if (/dessert|cake|cookie|souffle|pudding|crema|chocolate/.test(title)) {
+    calories = 300; 
+    protein = 5; 
+    fat = 15;
+  } else {
+    calories = 400; 
+    protein = 20; 
+    fat = 15;
+  }
+
+  return { calories, protein, fat };
 }

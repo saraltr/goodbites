@@ -62,16 +62,35 @@ export interface MealDetails {
   strMeal: string;
   strMealThumb: string;
   estimatedCost?: number | string;
+  cost?: number;
   nutrition: {
     calories: number;
     protein: number;
     fat: number;
   };
+  ingredients: string[];
+  isFresh: boolean;
+  seasonalScore: number;
   category?: string;
   area?: string;
   instructions?: string;
   tags?: string;
+
+  isVegan?: boolean;
+  isVegetarian?: boolean;
+  isPescatarian?: boolean;
+  isGlutenFree?: boolean;
 }
+// meal object shape
+export interface MealDB {
+  idMeal: string;
+  strMeal: string;
+  strCategory: string;
+  strMealThumb: string;
+  [key: `strIngredient${number}`]: string | null;
+  [key: `strMeasure${number}`]: string | null;
+}
+
 
 
 export interface MealResult {
@@ -85,6 +104,7 @@ export interface MealResult {
   title: string;
   image: string;
   cost: number;
+  fullCost: number;
   nutrition: {
     calories: number;
     protein: number;
@@ -99,4 +119,15 @@ export interface MealResult {
   repeatCount: number;
   repeatMessage?: string;
   includeSeasonal?: boolean;
+
+  isVegan?: boolean;
+  isVegetarian?: boolean;
+  isGlutenFree?: boolean;
 }
+
+export type Nutrition = {
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+};

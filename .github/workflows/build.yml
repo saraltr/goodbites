@@ -8,6 +8,7 @@ on:
       - Vince
       - frank
       - auth_middleware
+      - fix_session
   pull_request:
 
 jobs:

@@ -1,26 +1,14 @@
 import {
-  getMealIngredients,
-  computeSeasonalScore,
-  getReuseInfo,
-  registerIngredients,
-  isIngredientInSeason
+  getReuseInfo, registerIngredients, calculateFullCost
 } from "@/lib/mealUtils";
 import { MealDetails, MealResult } from "@/lib/types";
 
-const REPEAT_MESSAGE = "Repeat Meal! Reuses your ingredients to reduce food waste and stay on budget!";
+const REPEAT_MESSAGE = "Repeat Meal!";
 const MAX_WEEKLY_MEALS = 16;
 const MAX_DAILY_MEALS = 2;
 const REPEAT_COST = 1;
 const MAX_DAILY_DESSERTS = 1;
 const MAX_WEEKLY_DESSERTS = 2;
-
-// cost tiers based on ingredient type
-function baseMealCost(meal: MealDetails): number {
-  const title = meal.strMeal.toLowerCase();
-  if (/chicken|pork|beef|lamb|fish|seafood|goat|duck/.test(title)) return 7 + Math.random() * 3;
-  if (/cheese|eggs|tofu|legumes|stew|curry/.test(title)) return 5 + Math.random() * 2;
-  return 3 + Math.random() * 2;
-}
 
 // Shuffle array in-place
 function shuffleArray<T>(arr: T[]): void {
@@ -72,6 +60,11 @@ function pickDessert(
   };
 }
 
+// to capitalize ingredients
+function capitalizeWords(str: string) {
+  return str.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export default async function fetchMeals(
   budget: number,
   mode: "daily" | "weekly"
@@ -80,16 +73,12 @@ export default async function fetchMeals(
     let allMeals: MealDetails[] = [];
 
     const cached = localStorage.getItem("allMealsPool");
-    if (cached) allMeals = JSON.parse(cached);
-    else {
-      const letters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(97 + i));
-      const extraCategories = ["Dessert", "Side", "Snack"];
-      const fetches = [
-        ...letters.map(l => fetch(`/api/recipes?letter=${l}`).then(r => r.ok ? r.json() : []).catch(() => [])),
-        ...extraCategories.map(cat => fetch(`/api/recipes?category=${cat}`).then(r => r.ok ? r.json() : []).catch(() => []))
-      ];
-      const responses = await Promise.all(fetches);
-      allMeals = responses.flat();
+    if (cached) {
+      allMeals = JSON.parse(cached);
+    } else {
+      const res = await fetch("/api/categories");
+      const meals = res.ok ? await res.json() : [];
+      allMeals = meals;
       localStorage.setItem("allMealsPool", JSON.stringify(allMeals));
     }
 
@@ -100,30 +89,31 @@ export default async function fetchMeals(
 
     // format meals
     const formatted: MealResult[] = allMeals.map((meal, idx) => {
-      const ingredients = getMealIngredients(meal);
-      const isFresh = ingredients.some(isIngredientInSeason);
-      const seasonalScore = computeSeasonalScore(ingredients);
-      const baseCost = baseMealCost(meal);
+    const ingredients = meal.ingredients.map(capitalizeWords);
+    const seasonalScore = meal.seasonalScore ?? 0;
+    const isFresh = seasonalScore > 0;
 
-      return {
-        originalId: meal.idMeal,
-        id: getUniqueMealId(meal.idMeal, "orig", idx),
-        key: getUniqueMealId(meal.idMeal, "key", idx),
-        title: meal.strMeal,
-        image: meal.strMealThumb,
-        cost: Number(baseCost.toFixed(2)),
-        nutrition: meal.nutrition,
-        ingredients,
-        reusedIngredients: [], // will compute at selection time
-        isFresh,
-        seasonalScore,
-        includeSeasonal: !isFresh,
-        isRepeat: false,
-        repeatCount: 1,
-      };
-    });
+    return {
+      originalId: meal.idMeal,
+      id: getUniqueMealId(meal.idMeal, "orig", idx),
+      key: getUniqueMealId(meal.idMeal, "key", idx),
+      title: meal.strMeal,
+      image: meal.strMealThumb,
+      cost: meal.cost ?? 0,
+      fullCost: calculateFullCost(meal),
+      nutrition: meal.nutrition,
+      ingredients,
+      reusedIngredients: [],
+      isFresh,
+      seasonalScore,
+      includeSeasonal: isFresh,
+      isRepeat: false,
+      repeatCount: 1,
+    };
+  });
 
-    // sort by seasonal, then cost
+
+    // sort by seasonalScore, then cost
     formatted.sort((a, b) => {
       if (b.seasonalScore !== a.seasonalScore) return b.seasonalScore - a.seasonalScore;
       return a.cost - b.cost;
@@ -154,12 +144,12 @@ export default async function fetchMeals(
       );
       if (!candidates.length) break;
 
-      // weighted selection: seasonalScore + reusedIngredients
-      const totalWeight = candidates.reduce((sum, m) => sum + m.seasonalScore * 2, 0);
+      // weighted selection seasonalScore
+      const totalWeight = candidates.reduce((sum, m) => sum + m.seasonalScore, 0);
       let r = Math.random() * totalWeight;
       let selected: MealResult | null = null;
       for (const m of candidates) {
-        r -= m.seasonalScore * 2;
+        r -= m.seasonalScore;
         if (r <= 0) {
           selected = m;
           break;
@@ -182,8 +172,13 @@ export default async function fetchMeals(
     }
 
     // add desserts
+    // calculate budget per remaining meal
+    const remainingMeals = maxMeals - plan.length;
+    const budgetPerMeal = (budget - spent) / remainingMeals;
+
+    // only allow desserts if budgetPerMeal is reasonable
     let currentDesserts = plan.filter(isDessert).length;
-    while (currentDesserts < maxDesserts) {
+    while (currentDesserts < maxDesserts && budgetPerMeal >= 5) {
       const dessert = pickDessert(formatted, budget - spent, plan, maxDesserts, usedIngredients);
       if (!dessert) break;
 

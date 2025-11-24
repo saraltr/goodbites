@@ -3,9 +3,9 @@ import { db, authAdmin } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 // GET reviews for a recipe
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const recipeId = params.id;
+    const { id: recipeId } = await params;
     const reviewsSnapshot = await db.collection('reviews')
       .where('recipeId', '==', recipeId)
       .orderBy('createdAt', 'desc')
@@ -21,9 +21,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 // POST a new review for a recipe
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const recipeId = params.id;
+    const { id: recipeId } = await params;
 
     // 1. Verify user session
     const sessionCookie = req.cookies.get('__session')?.value;

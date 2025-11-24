@@ -59,8 +59,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ id: reviewRef.id, ...newReview }, { status: 201 });
 
   } catch (error) {
-    if (error.code === 'auth/session-cookie-expired' || error.code === 'auth/session-cookie-revoked') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+        const errorCode = (error as { code: string }).code;
+        if (errorCode === 'auth/session-cookie-expired' || errorCode === 'auth/session-cookie-revoked') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
     }
     console.error('Error creating review:', error);
     return NextResponse.json({ error: 'Failed to create review' }, { status: 500 });

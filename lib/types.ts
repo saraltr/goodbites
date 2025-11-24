@@ -55,3 +55,18 @@ export interface MealsWeekDoc {
   weekId: string;
   meals: WeekMeals;
 }
+
+export interface ReviewFormProps {
+  recipeId: string;
+  onReviewSubmit: (newReview: Review) => void;
+}
+
+export interface Review {
+  id: string;
+  recipeId: string;
+  rating: number;
+  comment: string;
+  userId: string | null;
+  userName: string;
+  createdAt: { seconds: number; nanoseconds: number } | string;
+}

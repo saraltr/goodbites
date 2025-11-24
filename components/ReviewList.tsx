@@ -31,8 +31,8 @@ export default function ReviewList({ reviews }: ReviewListProps) {
   if (!reviews || reviews.length === 0) {
     return (
       <div className="mt-8">
-        <h3 className="text-xl font-semibold mb-4">Reviews</h3>
-        <p>No reviews yet. Be the first to leave a review!</p>
+        <h3 className="text-xl font-semibold mb-4 text-[#2e7d32]">Reviews</h3>
+        <p className="text-black">No reviews yet. Be the first to leave a review!</p>
       </div>
     );
   }
@@ -46,12 +46,12 @@ export default function ReviewList({ reviews }: ReviewListProps) {
 
   return (
     <div className="mt-8">
-      <h3 className="text-xl font-semibold mb-4">Reviews</h3>
+      <h3 className="text-xl text-[#2e7d32] font-semibold mb-4">Reviews</h3>
       <div className="space-y-4">
         {reviews.map((review) => (
           <div key={review.id} className="p-4 border rounded-lg bg-white">
             <div className="flex justify-between items-center mb-2">
-              <p className="font-semibold">{review.userName}</p>
+              <p className="text-[#2e7d32] font-semibold">{review.userName}</p>
               <StarDisplay rating={review.rating} />
             </div>
             <p className="text-gray-700">{review.comment}</p>

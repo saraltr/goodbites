@@ -3,9 +3,10 @@ import { db, authAdmin } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 // GET reviews for a recipe
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const recipeId = params.id;
+    const { id: recipeId } = await context.params;
+    if (!recipeId) return NextResponse.json([], { status: 200 });
     const reviewsSnapshot = await db.collection('reviews')
       .where('recipeId', '==', recipeId)
       .orderBy('createdAt', 'desc')
@@ -15,28 +16,36 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json(reviews, { status: 200 });
   } catch (error) {
-    console.error('Error fetching reviews:', error);
-    return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 });
+    const err = error instanceof Error ? error : new Error("Unknown error");
+        console.error("[REVIEWS GET ERROR]", err.message);
+        return NextResponse.json({ error: "Failed to fetch reviews" }, { status: 500 });
   }
 }
 
 // POST a new review for a recipe
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const recipeId = params.id;
+    const { id: recipeId } = await context.params;
 
-    // 1. Verify user session
+    // get session cookie
     const sessionCookie = req.cookies.get('__session')?.value;
-    if (!sessionCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    let userId: string | null = null;
+    let userName = "Anonymous";
+
+    if (sessionCookie) {
+      try {
+        const decoded = await authAdmin.verifySessionCookie(sessionCookie, true);
+        userId = decoded.uid;
+        userName = decoded.name || "Anonymous";
+      } catch (err) {
+        console.warn("[REVIEWS POST] Invalid session cookie, posting as anonymous");
+      }
     }
 
-    const decodedClaims = await authAdmin.verifySessionCookie(sessionCookie, true);
-    const userId = decodedClaims.uid;
-    const userName = decodedClaims.name || 'Anonymous'; // Fallback for name
-
-    // 2. Parse request body
+    // parse request body
     const { rating, comment } = await req.json();
+
+    // validate input
     if (!rating || typeof rating !== 'number' || rating < 1 || rating > 5) {
       return NextResponse.json({ error: 'Invalid rating' }, { status: 400 });
     }
@@ -56,13 +65,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const reviewRef = await db.collection('reviews').add(newReview);
 
+    // debug 
+    // console.log("[REVIEWS POST] Recipe:", recipeId, "User:", userId || "Anonymous");
+
     return NextResponse.json({ id: reviewRef.id, ...newReview }, { status: 201 });
 
   } catch (error) {
-    if (error.code === 'auth/session-cookie-expired' || error.code === 'auth/session-cookie-revoked') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    console.error('Error creating review:', error);
-    return NextResponse.json({ error: 'Failed to create review' }, { status: 500 });
+    const err = error instanceof Error ? error : new Error("Unknown error");
+    console.error("[REVIEWS POST ERROR]", err.message);
+    return NextResponse.json({ error: "Failed to create review" }, { status: 500 });
   }
 }

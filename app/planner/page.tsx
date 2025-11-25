@@ -8,5 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default function PlannerPage() {
-  return <MealPlanner/>;
+  return(
+  <main className="min-h-screen bg-gray-50 p-6"><MealPlanner/></main>
+  )
 }

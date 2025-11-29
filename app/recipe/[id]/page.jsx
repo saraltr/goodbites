@@ -43,18 +43,20 @@ export default function RecipeDetail() {
   }, [id]);
 
   const handleReviewSubmit = (newReview) => {
-  setReviews((prev) => {
-    const updated = [newReview, ...prev];
+    setReviews((prev) => [newReview, ...prev]);
+  };
 
-    // ensure correct ordering
-    return updated.sort((a, b) => {
-      const dateA = a.createdAt?._seconds ?? a.createdAt ?? 0;
-      const dateB = b.createdAt?._seconds ?? b.createdAt ?? 0;
-      return dateB - dateA; // newest first
-    });
-  });
-};
+  const handleReviewUpdate = (updatedReview) => {
+    setReviews((prev) =>
+      prev.map((review) =>
+        review.id === updatedReview.id ? updatedReview : review
+      )
+    );
+  };
 
+  const handleReviewDelete = (reviewId) => {
+    setReviews((prev) => prev.filter((review) => review.id !== reviewId));
+  };
 
   if (loading)
     return (
@@ -138,7 +140,12 @@ export default function RecipeDetail() {
         </div>
 
         <div className="mt-8 border-t pt-8">
-          <ReviewList reviews={reviews} />
+          <ReviewList
+            reviews={reviews}
+            recipeId={id}
+            onReviewUpdate={handleReviewUpdate}
+            onReviewDelete={handleReviewDelete}
+          />
           <ReviewForm recipeId={id} onReviewSubmit={handleReviewSubmit} />
         </div>
       </div>

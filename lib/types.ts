@@ -59,6 +59,7 @@ export interface MealsWeekDoc {
 export interface ReviewFormProps {
   recipeId: string;
   onReviewSubmit: (newReview: Review) => void;
+  existingReview?: Review;
 }
 
 export interface Review {

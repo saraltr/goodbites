@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState([]);
@@ -14,7 +14,7 @@ export default function RecipesPage() {
   const [error, setError] = useState("");
 
   // Fetch recipes with filters
-  const fetchRecipes = async () => {
+  const fetchRecipes = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -40,7 +40,7 @@ export default function RecipesPage() {
     }
 
     setLoading(false);
-  };
+  }, [search, ingredient, category, diet]);
 
   // Load categories + initial recipes
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function RecipesPage() {
       await fetchRecipes();
     }
     initialize();
-  }, []);
+  }, [fetchRecipes]);
 
   const handleSearch = (e) => {
     e.preventDefault();

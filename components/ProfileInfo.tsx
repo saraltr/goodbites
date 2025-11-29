@@ -12,6 +12,8 @@ import { useParams, useRouter } from "next/navigation";
 import { FirebaseError } from "firebase/app";
 import Modal from "@/components/Modal";
 import { FirestoreUser } from "@/lib/types";
+import UserMenu from "./UserMenu";
+import UserFavs from "./UserFavorites";
 
 export default function ProfileInfo() {
   // get user id from url params
@@ -304,6 +306,27 @@ if (!profileUser && !loading)
           </div>
         </div>
       </div>
+
+      {/* layout for user menu + main content */}
+      <div className="mt-10 max-w-7xl mx-auto text-black">
+
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8">
+          
+          {/* side bar */}
+          <aside className="bg-white rounded-2xl shadow p-4 h-fit lg:sticky top-6">
+            <h3 className="text-lg font-semibold mb-3 text-green-700">Your Generated Menus</h3>
+            <div className="max-h-[600px] overflow-y-auto pr-2">
+              <UserMenu />
+            </div>
+          </aside>
+
+          <main className="w-full">
+            <UserFavs />
+          </main>
+
+        </div>
+      </div>
+
 
       {/* modal */}
       <Modal

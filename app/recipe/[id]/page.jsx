@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ReviewList from "@/components/ReviewList";
 import ReviewForm from "@/components/ReviewForm";
+import AddToFavorites from "@/components/FavButton";
 
 export default function RecipeDetail() {
   const { id } = useParams();
@@ -82,6 +83,8 @@ export default function RecipeDetail() {
         <h1 className="text-3xl font-bold text-[#2e7d32] mb-4">
           {recipe.strMeal}
         </h1>
+          <AddToFavorites mealId={recipe.idMeal} />
+
 
         {/* Recipe Image */}
         <img

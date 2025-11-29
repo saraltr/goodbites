@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import AddToFavorites from "@/components/FavButton";
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState([]);
@@ -197,33 +198,40 @@ export default function RecipesPage() {
           {recipes.map((recipe) => (
             <div
               key={recipe.idMeal}
-              className="bg-white rounded-2xl shadow hover:shadow-lg 
-                         transition overflow-hidden border border-gray-100"
+              className="relative bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden border border-gray-100"
             >
+              {/* Recipe Image */}
               <img
                 src={recipe.strMealThumb || "/images/placeholder-food.jpg"}
                 alt={recipe.strMeal}
                 className="w-full h-48 object-cover"
               />
+
+              {/* Floating Favorites Button */}
+              <div className="absolute top-2 right-2">
+                <AddToFavorites mealId={recipe.idMeal} />
+              </div>
+
+              {/* Recipe Info */}
               <div className="p-4">
                 <h2 className="text-lg font-semibold text-gray-900 mb-1">
                   {recipe.strMeal}
                 </h2>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 mb-1">
                   {recipe.strCategory} • {recipe.strArea}
                 </p>
-                <p className="text-sm text-gray-700 mt-2">
+                <p className="text-sm text-gray-700">
                   💲 {recipe.estimatedCost} • 🔥 {recipe.nutrition.calories} cal
                 </p>
                 <a
                   href={`/recipe/${recipe.idMeal}`}
-                  className="inline-block mt-3 text-green-600 hover:underline 
-                             text-sm font-medium"
+                  className="inline-block mt-3 text-green-600 hover:underline text-sm font-medium"
                 >
                   View Recipe →
                 </a>
               </div>
             </div>
+
           ))}
         </div>
       )}

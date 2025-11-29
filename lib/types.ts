@@ -59,7 +59,8 @@ export interface MealsWeekDoc {
 export interface ReviewFormProps {
   recipeId: string;
   onReviewSubmit: (newReview: Review) => void;
-  existingReview?: Review;
+  existingReview?: Review | null;
+  onCancel?: () => void;
 }
 
 export interface Review {
@@ -105,8 +106,6 @@ export interface MealDB {
   [key: `strIngredient${number}`]: string | null;
   [key: `strMeasure${number}`]: string | null;
 }
-
-
 
 export interface MealResult {
   // original recipe ID

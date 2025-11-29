@@ -3,12 +3,15 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import StarRating from "./StarRating";
-import { ReviewFormProps } from "@/lib/types";
+import { Review, ReviewFormProps } from "@/lib/types";
+import { on } from "events";
+import { message } from "antd";
 
 export default function ReviewForm({
   recipeId,
   existingReview,
   onReviewSubmit,
+  onCancel,
 }: ReviewFormProps) {
   const { user } = useAuth();
   const [rating, setRating] = useState(0);
@@ -60,7 +63,10 @@ export default function ReviewForm({
         throw new Error(data.error || "Failed to submit review.");
       }
 
-      const result = await response.json();
+      const result = { ...existingReview, rating, comment } as Review;
+
+      message.success(existingReview ? "Review updated!" : "Review submitted!");
+
       onReviewSubmit(result);
       setRating(0);
       setComment("");
@@ -87,7 +93,7 @@ export default function ReviewForm({
 
   return (
     <div className="mt-8">
-      <h3 className="text-xl text-[#2e7d32] font-semibold mb-4">
+      <h3 className="text-xl text-primary font-semibold mb-4">
         {existingReview ? "Edit Your Review" : "Leave a Review"}
       </h3>
       <form onSubmit={handleSubmit}>
@@ -109,19 +115,30 @@ export default function ReviewForm({
           />
         </div>
         {error && <p className="text-red-500 mb-4">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
-        >
-          {submitting
-            ? existingReview
-              ? "Updating..."
-              : "Submitting..."
-            : existingReview
-            ? "Update Review"
-            : "Submit Review"}
-        </button>
+        <div className="flex items-center justify-end gap-4">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+          >
+            {submitting
+              ? existingReview
+                ? "Updating..."
+                : "Submitting..."
+              : existingReview
+              ? "Update"
+              : "Submit"}
+          </button>
+          {!!onCancel && (
+            <button
+              type="button"
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </form>
     </div>
   );

@@ -1,54 +1,56 @@
+const CACHE_TTL = 5 * 60 * 1000;
+let CACHE = {};
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
 
-  const name = searchParams.get("search");
-  const ingredient = searchParams.get("ingredient");
-  const category = searchParams.get("category");
-  const diet = searchParams.get("diet");
+  // Pagination
+  const page = Number(searchParams.get("page")) || 1;
+  const limit = Number(searchParams.get("limit")) || 20;
+
+  // Filters
+  const query = searchParams.get("query")?.toLowerCase() || "";
+  const categoriesParam = searchParams.get("categories");
+  const selectedCategories = categoriesParam ? categoriesParam.split(",") : [];
+  const diet = searchParams.get("diet")?.toLowerCase() || "";
+
+  const cacheKey = `${query}-${selectedCategories.join(
+    ","
+  )}-${diet}-allMeals`;
+
+  // ---- 1) Return from cache if fresh ----
+  if (CACHE[cacheKey] && Date.now() - CACHE[cacheKey].time < CACHE_TTL) {
+    const cachedMeals = CACHE[cacheKey].data;
+    const paginated = paginate(cachedMeals, page, limit);
+
+    return Response.json(paginated);
+  }
 
   try {
-    let apiUrl = "";
+    // ---- 2) Fetch ALL meals A–Z (cached in memory) ----
+    const allMeals = await loadAllMeals();
 
-    // 🎯 PRIORITY ORDER: search > ingredient > category > default
-    if (name) {
-      apiUrl = `https://www.themealdb.com/api/json/v1/1/search.php?s=${name}`;
-    } else if (ingredient) {
-      apiUrl = `https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredient}`;
-    } else if (category) {
-      apiUrl = `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`;
-    } else {
-      // default: get all recipes that start with "a"
-      apiUrl = `https://www.themealdb.com/api/json/v1/1/search.php?f=a`;
+    // ---- 3) Apply combined search ----
+    let filtered = allMeals;
+
+    if (query) {
+      filtered = filtered.filter(
+        (meal) =>
+          meal.strMeal.toLowerCase().includes(query) ||
+          meal.ingredientsList.some((i) => i.includes(query))
+      );
     }
 
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-
-    if (!data.meals) {
-      return new Response(JSON.stringify({ message: "No recipes found" }), {
-        status: 404,
-      });
+    // ---- 4) Apply category filtering ----
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter((meal) =>
+        selectedCategories.includes(meal.strCategory)
+      );
     }
 
-    // If ingredient or category filters are used, results return limited data → lookup each recipe
-    let meals = [];
-    if (ingredient || category) {
-      for (const item of data.meals) {
-        const full = await fetch(
-          `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${item.idMeal}`
-        );
-        const fullData = await full.json();
-        if (fullData.meals && fullData.meals[0]) {
-          meals.push(fullData.meals[0]);
-        }
-      }
-    } else {
-      meals = data.meals;
-    }
-
-    // 🥦 Apply dietary filter manually
+    // ---- 5) Dietary filtering ----
     if (diet) {
-      meals = meals.filter((meal) => {
+      filtered = filtered.filter((meal) => {
         const tags = meal.strTags?.toLowerCase() || "";
 
         switch (diet) {
@@ -57,68 +59,113 @@ export async function GET(request) {
           case "vegetarian":
             return tags.includes("vegetarian");
           case "low-fat":
-            return tags.includes("low-fat") || tags.includes("low fat");
+            return tags.includes("low fat") || tags.includes("low-fat");
           default:
             return true;
         }
       });
     }
 
-    // Add cost + nutrition
-    const extended = meals.map((meal) => ({
+    // ---- 6) Add estimatedCost + nutrition ----
+    const enriched = filtered.map((meal) => ({
       ...meal,
       estimatedCost: calculateCost(meal),
       nutrition: calculateNutrition(meal),
     }));
 
-    return new Response(JSON.stringify(extended), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    // Save in cache
+    CACHE[cacheKey] = {
+      time: Date.now(),
+      data: enriched,
+    };
+
+    // ---- 7) Paginate ----
+    const paginated = paginate(enriched, page, limit);
+
+    return Response.json(paginated);
   } catch (error) {
-    console.error("Error fetching recipes:", error);
-    return new Response(
-      JSON.stringify({ message: "Failed to fetch recipes" }),
+    console.error("API ERROR:", error);
+    return Response.json(
+      { message: "Failed to fetch recipes" },
       { status: 500 }
     );
   }
 }
 
+/* -------------------------------------------------------
+   LOAD ALL MEALS A–Z IN A SINGLE PASS + CACHE GLOBALLY
+------------------------------------------------------- */
+let ALL_MEALS_CACHE = null;
+
+async function loadAllMeals() {
+  if (ALL_MEALS_CACHE && Date.now() - ALL_MEALS_CACHE.time < CACHE_TTL) {
+    return ALL_MEALS_CACHE.data;
+  }
+
+  const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
+  let meals = [];
+
+  for (const letter of alphabet) {
+    const res = await fetch(
+      `https://www.themealdb.com/api/json/v1/1/search.php?f=${letter}`
+    );
+    const data = await res.json();
+    if (data.meals) {
+      const expanded = data.meals.map((meal) => ({
+        ...meal,
+        ingredientsList: extractIngredients(meal),
+      }));
+      meals.push(...expanded);
+    }
+  }
+
+  ALL_MEALS_CACHE = {
+    time: Date.now(),
+    data: meals,
+  };
+
+  return meals;
+}
+
+/* -------------------------------------------------------
+   Helper Functions
+------------------------------------------------------- */
+
+// Extract the ingredient strings from the MealDB object
+function extractIngredients(meal) {
+  let ingredients = [];
+  for (let i = 1; i <= 20; i++) {
+    const key = meal[`strIngredient${i}`];
+    if (key && key.trim()) {
+      ingredients.push(key.toLowerCase());
+    }
+  }
+  return ingredients;
+}
+
+// Cost function based on number of ingredients
 function calculateCost(meal) {
-  const ingredientCount = Object.keys(meal).filter(
-    (k) => k.startsWith("strIngredient") && meal[k]
-  ).length;
+  const ingredientCount = extractIngredients(meal).length;
   return (4 + ingredientCount * 0.75).toFixed(2);
 }
 
-function calculateNutrition(meal) {
-  const title = meal.strMeal.toLowerCase(); // use meal name
+// Random nutritional values (safe: no SSR usage)
+function calculateNutrition() {
+  const calories = 150 + Math.floor(Math.random() * 200);
+  return {
+    calories,
+    protein: Math.floor(calories / 12),
+    fat: Math.floor(calories / 18),
+  };
+}
 
-  let calories = 0;
-  let protein = 0;
-  let fat = 0;
+// Paginate a dataset
+function paginate(items, page, limit) {
+  const start = (page - 1) * limit;
+  const end = start + limit;
 
-  if (/chicken|pork|beef|lamb|fish|seafood|goat|duck/.test(title)) {
-    calories = 600;  // average main protein meal
-    protein = 35;    
-    fat = 20;
-  } else if (/pasta|rice|potato|fettuccine/.test(title)) {
-    calories = 550; 
-    protein = 18; 
-    fat = 15;
-  } else if (/vegetarian|vegan|stew|curry|legumes|tofu|salad/.test(title)) {
-    calories = 400; 
-    protein = 15; 
-    fat = 12;
-  } else if (/dessert|cake|cookie|souffle|pudding|crema|chocolate/.test(title)) {
-    calories = 300; 
-    protein = 5; 
-    fat = 15;
-  } else {
-    calories = 400; 
-    protein = 20; 
-    fat = 15;
-  }
-
-  return { calories, protein, fat };
+  return {
+    meals: items.slice(start, end),
+    totalPages: Math.ceil(items.length / limit),
+  };
 }

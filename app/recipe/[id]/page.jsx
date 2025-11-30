@@ -6,6 +6,8 @@ import { useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import ReviewList from "@/components/ReviewList";
 import ReviewForm from "@/components/ReviewForm";
+import AddToFavorites from "@/components/FavButton";
+
 
 export default function RecipeDetail() {
   const { id } = useParams();
@@ -101,6 +103,7 @@ export default function RecipeDetail() {
         </h1>
 
         {/* Recipe Image */}
+        <div className="relative w-full max-h-[400px] mb-6">
         <Image
           src={
             recipe.strMealThumb && recipe.strMealThumb.trim() !== ""
@@ -113,6 +116,14 @@ export default function RecipeDetail() {
           className="w-full max-h-[400px] object-cover rounded-xl shadow mb-6"
         />
 
+          {/* add to favorites button */}
+          {/* only display fav button if the user logged in */}
+          {user && (
+          <div className="absolute top-3 right-3 z-10">
+            <AddToFavorites mealId={id} />
+          </div>
+        )}
+        </div>
         <p className="text-gray-700 mb-6">{recipe.strInstructions}</p>
 
         <h2 className="text-xl font-semibold mb-3">Ingredients</h2>

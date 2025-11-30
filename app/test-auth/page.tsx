@@ -12,10 +12,10 @@ export default function TestAuth() {
     try {
       await signOut(auth!);
 
-      // 2️⃣ Clear server session cookie
+      // clear server session cookie
       document.cookie = "__session=; path=/; max-age=0";
 
-      // 3️⃣ Redirect to login page
+      // redirect to login page
       window.location.href = "/login";
     } catch (err) {
       console.error("Failed to log out:", err);

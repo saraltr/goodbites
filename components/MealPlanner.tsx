@@ -4,13 +4,16 @@ import Link from "next/link";
 import Image from "next/image";
 import fetchMeals from "@/lib/fetchMeals";
 import { MealResult } from "@/lib/types";
-import { Row, Col, Card, Button, Select, InputNumber, Badge, Tabs, Divider, Tag, Empty, Form } from "antd";
+import { Row, Col, Card, Button, Select, InputNumber, Badge, Tabs, Divider, Tag, Empty, Form, Tooltip } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 const { Option } = Select;
 import MenuInfo from "./MenuInfo";
+import { useAuth } from "@/contexts/AuthContext";
+
 
 export default function MealPlanner() {
+  const { user } = useAuth();
   const [plannerData, setPlannerData] = useLocalStorage<{
     mode: "daily" | "weekly";
     budget: number;
@@ -121,9 +124,11 @@ return (
         </Col>
 
         <Col>
-          <Button type="primary" onClick={handleConfirmMenu}>
+        <Tooltip title={!user ? "Log in to save your menu!" : ""}>
+          <Button type="primary" onClick={handleConfirmMenu} disabled={!user}>
             Confirm Menu
           </Button>
+        </Tooltip>
         </Col>
         <Col>
         <Button

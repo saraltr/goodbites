@@ -1,67 +1,83 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Select } from "antd";
 
 export default function RecipesPage() {
+  // Recipes + pagination
   const [recipes, setRecipes] = useState([]);
-  const [search, setSearch] = useState("");
-  const [ingredient, setIngredient] = useState("");
-  const [category, setCategory] = useState("");
-  const [diet, setDiet] = useState("");
-  const [categories, setCategories] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit, setLimit] = useState(20);
 
+  // Filters
+  const [query, setQuery] = useState(""); // 🔍 Combined name + ingredient search
+  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [diet, setDiet] = useState("");
+
+  // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch recipes with filters
+  // Fetch categories once
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const res = await fetch("https://www.themealdb.com/api/json/v1/1/list.php?c=list");
+        const data = await res.json();
+        if (data.meals) setCategories(data.meals);
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+      }
+    }
+    loadCategories();
+  }, []);
+
+  // Fetch recipes whenever filters or page/limit change
+  useEffect(() => {
+    fetchRecipes();
+  }, [page, limit]);
+
+  // Fetch recipes
   const fetchRecipes = async () => {
     setLoading(true);
     setError("");
 
     const params = new URLSearchParams();
-    if (search) params.append("search", search);
-    if (ingredient) params.append("ingredient", ingredient);
-    if (category) params.append("category", category);
+    params.append("page", page);
+    params.append("limit", limit);
+
+    if (query) params.append("query", query);
+
+    if (selectedCategories.length > 0) {
+      params.append("categories", selectedCategories.join(","));
+    }
+
     if (diet) params.append("diet", diet);
 
     try {
       const response = await fetch(`/api/recipes?${params.toString()}`);
       const data = await response.json();
 
-      if (!response.ok || !data || data.message === "No recipes found") {
+      if (!response.ok) {
         setRecipes([]);
-        setError("No recipes found. Please try different filters.");
+        setError("No recipes found. Try another search.");
       } else {
-        setRecipes(data);
+        setRecipes(data.meals || []);
+        setTotalPages(data.totalPages || 1);
       }
     } catch (err) {
       console.error("Error fetching recipes:", err);
-      setError("Something went wrong. Please try again.");
+      setError("Something went wrong.");
     }
 
     setLoading(false);
   };
 
-  // Load categories + initial recipes
-  useEffect(() => {
-    async function initialize() {
-      try {
-        const res = await fetch(
-          "https://www.themealdb.com/api/json/v1/1/list.php?c=list"
-        );
-        const data = await res.json();
-        if (data.meals) setCategories(data.meals);
-      } catch (err) {
-        console.error("Failed to load categories:", err);
-      }
-
-      await fetchRecipes();
-    }
-    initialize();
-  }, []);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
+  // Apply filters
+  const applyFilters = () => {
+    setPage(1);
     fetchRecipes();
   };
 
@@ -69,163 +85,184 @@ export default function RecipesPage() {
     <main className="p-8 bg-[#fafaf8] min-h-screen">
       <h1 className="text-4xl font-bold text-[#2e7d32] mb-6">Find Recipes</h1>
 
-      {/* Search by Name */}
-      <form
-        onSubmit={handleSearch}
-        className="flex flex-col items-start gap-3 mb-6"
-      >
-        <label className="text-gray-900 font-semibold">Search by Name</label>
+      {/* 🔍 Combined Search */}
+      <div className="mb-6 flex flex-col items-start gap-2">
+        <label className="text-gray-900 font-semibold">Search by Name or Ingredient</label>
         <input
           type="text"
-          placeholder="e.g. Pasta"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-md border border-gray-300 rounded-xl px-4 py-2 
-                     bg-white text-gray-900 placeholder-gray-500 
-                     focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-
-        <button
-          type="submit"
-          className="bg-green-600 hover:bg-green-700 text-white font-semibold 
-                     px-5 py-2 rounded-xl transition"
-        >
-          Search
-        </button>
-      </form>
-
-      {/* Ingredient Filter */}
-      <div className="mb-6 flex flex-col items-start">
-        <label className="text-gray-900 font-semibold mb-2">
-          Search by Ingredient
-        </label>
-        <input
-          type="text"
-          placeholder="e.g., chicken, garlic, rice..."
-          value={ingredient}
-          onChange={(e) => setIngredient(e.target.value)}
+          placeholder="e.g. Chicken, Rice, Pasta…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           className="w-full max-w-md border border-gray-300 rounded-xl px-4 py-2
                      bg-white text-gray-900 placeholder-gray-500
                      focus:outline-none focus:ring-2 focus:ring-green-500"
         />
       </div>
 
-      {/* Category Dropdown */}
-      <div className="mb-6 flex flex-col items-start">
-        <label className="text-gray-900 font-semibold mb-2">Category</label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full max-w-md border border-gray-300 rounded-xl px-4 py-2
-                     bg-white text-gray-900 focus:outline-none focus:ring-2 
-                     focus:ring-green-500"
-        >
-          <option value="">All Categories</option>
-          {categories.map((cat) => (
-            <option key={cat.strCategory} value={cat.strCategory}>
-              {cat.strCategory}
-            </option>
-          ))}
-        </select>
+      {/* 🗂 Multi-select Category Filter (AntD) */}
+      <div className="mb-6 w-full max-w-md">
+        <label className="text-gray-900 font-semibold mb-2 block">Categories</label>
+
+        <Select
+          mode="multiple"
+          allowClear
+          placeholder="Select categories"
+          className="w-full text-black"
+          onChange={(values) => {
+            setSelectedCategories(values);
+            setPage(1);
+          }}
+          value={selectedCategories}
+          options={categories.map((c) => ({
+            label: c.strCategory,
+            value: c.strCategory,
+          }))}
+        />
       </div>
 
-      {/* Dietary Filters */}
-      <div className="mb-6">
-        <label className="block text-gray-900 font-semibold mb-2">
-          Dietary Preference
-        </label>
-
-        <div className="flex gap-6 flex-wrap">
-          {[
-            { label: "None", value: "" },
-            { label: "Vegetarian", value: "vegetarian" },
-            { label: "Vegan", value: "vegan" },
-            { label: "Low Fat", value: "low-fat" },
-          ].map((item) => (
-            <label
-              key={item.value}
-              className="flex items-center gap-2 text-gray-900"
-            >
-              <input
-                type="radio"
-                name="diet"
-                value={item.value}
-                checked={diet === item.value}
-                onChange={() => setDiet(item.value)}
-              />
-              {item.label}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Apply Filters Button */}
+      {/* APPLY FILTERS */}
       <button
-        onClick={fetchRecipes}
+        onClick={applyFilters}
         className="bg-green-600 hover:bg-green-700 text-white font-semibold 
-                   px-6 py-2 rounded-xl mb-8"
+                   px-6 py-2 rounded-xl mb-8 transition"
       >
         Apply Filters
       </button>
 
-      {/* Loading Spinner */}
-      {loading && (
-        <div className="flex justify-center mt-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 
-                          border-green-600"></div>
-        </div>
-      )}
+      {/* Dietary + Recipes Per Page */}
+      <div className="mb-6 flex flex-col md:flex-row gap-10">
+        {/* Dietary Filters */}
+        <div>
+          <label className="block text-gray-900 font-semibold mb-2">
+            Dietary Preference
+          </label>
 
-      {/* Error Message */}
-      {!loading && error && (
-        <div className="text-center mt-10">
-          <p className="text-red-600 font-medium text-lg">{error}</p>
-          <button
-            onClick={fetchRecipes}
-            className="mt-4 bg-green-600 hover:bg-green-700 text-white 
-                       font-semibold px-4 py-2 rounded-xl transition"
+          <div className="flex gap-6 flex-wrap">
+            {[
+              { label: "None", value: "" },
+              { label: "Vegetarian", value: "vegetarian" },
+              { label: "Vegan", value: "vegan" },
+              { label: "Low Fat", value: "low-fat" },
+            ].map((item) => (
+              <label key={item.value} className="flex items-center gap-2 text-gray-900">
+                <input
+                  type="radio"
+                  name="diet"
+                  value={item.value}
+                  checked={diet === item.value}
+                  onChange={() => setDiet(item.value)}
+                />
+                {item.label}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Recipes Per Page */}
+        <div>
+          <label className="block text-gray-900 font-semibold mb-2">
+            Recipes Per Page
+          </label>
+
+          <select
+            value={limit}
+            onChange={(e) => {
+              setLimit(Number(e.target.value));
+              setPage(1);
+            }}
+            className="border border-gray-300 rounded-xl px-3 py-2 text-gray-900"
           >
-            Try Again
-          </button>
+            {[10, 20, 30, 40, 50].map((num) => (
+              <option key={num} value={num} className="text-gray-900">
+                {num}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* LOADING */}
+      {loading && (
+        <div className="flex justify-center my-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-green-600"></div>
         </div>
       )}
 
-      {/* Recipe Grid */}
+      {/* ERROR */}
+      {!loading && error && (
+        <p className="text-center text-red-600 font-medium text-lg">{error}</p>
+      )}
+
+      {/* RECIPES GRID */}
       {!loading && !error && recipes.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 
-                        lg:grid-cols-4 gap-6">
-          {recipes.map((recipe) => (
-            <div
-              key={recipe.idMeal}
-              className="bg-white rounded-2xl shadow hover:shadow-lg 
-                         transition overflow-hidden border border-gray-100"
-            >
-              <img
-                src={recipe.strMealThumb || "/images/placeholder-food.jpg"}
-                alt={recipe.strMeal}
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-4">
-                <h2 className="text-lg font-semibold text-gray-900 mb-1">
-                  {recipe.strMeal}
-                </h2>
-                <p className="text-sm text-gray-600">
-                  {recipe.strCategory} • {recipe.strArea}
-                </p>
-                <p className="text-sm text-gray-700 mt-2">
-                  💲 {recipe.estimatedCost} • 🔥 {recipe.nutrition.calories} cal
-                </p>
-                <a
-                  href={`/recipe/${recipe.idMeal}`}
-                  className="inline-block mt-3 text-green-600 hover:underline 
-                             text-sm font-medium"
-                >
-                  View Recipe →
-                </a>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {recipes.map((recipe) => (
+              <div
+                key={recipe.idMeal}
+                className="bg-white rounded-2xl shadow-md hover:shadow-lg transition overflow-hidden"
+              >
+                <img
+                  src={recipe.strMealThumb || "/images/placeholder-food.jpg"}
+                  alt={recipe.strMeal}
+                  className="w-full h-48 object-cover"
+                />
+
+                <div className="p-4">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {recipe.strMeal}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {recipe.strCategory} • {recipe.strArea}
+                  </p>
+                  <p className="text-sm text-gray-700 mt-2">
+                    💲 {recipe.estimatedCost} • 🔥 {recipe.nutrition.calories} cal
+                  </p>
+
+                  <a
+                    href={`/recipe/${recipe.idMeal}`}
+                    className="text-green-600 hover:underline text-sm font-medium"
+                  >
+                    View Recipe →
+                  </a>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          {/* PAGINATION */}
+          <div className="flex justify-center items-center gap-4 mt-10">
+            <button
+              onClick={() => setPage((p) => Math.max(p - 1, 1))}
+              disabled={page === 1}
+              className={`px-5 py-2 rounded-xl font-semibold transition
+                ${
+                  page === 1
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-green-600 text-white hover:bg-green-700 hover:scale-105"
+                }`}
+            >
+              ← Previous
+            </button>
+
+            <span className="text-lg font-bold text-gray-900">
+              Page {page} / {totalPages}
+            </span>
+
+            <button
+              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+              disabled={page === totalPages}
+              className={`px-5 py-2 rounded-xl font-semibold transition
+                ${
+                  page === totalPages
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-green-600 text-white hover:bg-green-700 hover:scale-105"
+                }`}
+            >
+              Next →
+            </button>
+          </div>
+        </>
       )}
     </main>
   );

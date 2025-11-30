@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import AddToFavorites from "@/components/FavButton";
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState([]);
@@ -206,11 +205,6 @@ export default function RecipesPage() {
                 alt={recipe.strMeal}
                 className="w-full h-48 object-cover"
               />
-
-              {/* Floating Favorites Button */}
-              <div className="absolute top-2 right-2">
-                <AddToFavorites mealId={recipe.idMeal} />
-              </div>
 
               {/* Recipe Info */}
               <div className="p-4">

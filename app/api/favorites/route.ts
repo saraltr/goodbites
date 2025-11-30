@@ -45,8 +45,14 @@ export async function POST(request: NextRequest) {
         .get();
 
     if (!existingFav.empty) {
+      const doc = existingFav.docs[0];
       return NextResponse.json(
-        { error: "Recipe is already in favorites" },
+        { error: "Recipe is already in favorites",
+          recipe: {
+            firestoreId: doc.id,
+            mealId
+          }
+         },
         { status: 409 }
       );
     }
@@ -59,7 +65,12 @@ export async function POST(request: NextRequest) {
         .set(newFav);
 
     return NextResponse.json(
-      { message: "Added recipe to favorites", user: userId, recipe: { mealId } },
+      { message: "Added recipe to favorites", 
+        user: userId, 
+        recipe: { 
+          firestoreId: favsId,
+          mealId 
+        } },
       { status: 201 }
     );
 

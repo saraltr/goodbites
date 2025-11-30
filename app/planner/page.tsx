@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 
 
 export const metadata: Metadata = {
-  title: "Register | Good Bites",
-  description: "Join Good Bites!",
+  title: "Meal Planner | Good Bites",
+  description: "Generate ",
 };
 
 export default function PlannerPage() {

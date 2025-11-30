@@ -2,17 +2,27 @@
 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { signOut } from "firebase/auth";
 import { auth } from "@/utils/FirebaseConfig";
+import { useRouter } from "next/navigation";
+
 
 export default function Navbar() {
+  const router = useRouter();
   const { user } = useAuth();
 
-  const handleLogout = async () => {
-    await signOut(auth!);
-    document.cookie = "__session=; path=/; max-age=0";
-    window.location.href = "/";
-  };
+  const handleLogout = async (): Promise<void> => {
+      try {
+      // call api route to delete session cookie
+      await fetch("/api/auth/logout", { method: "POST" });
+  
+      // also sign out client auth
+      await auth!.signOut();
+  
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+    };
 
   return (
     <nav className="w-full bg-white shadow-sm">

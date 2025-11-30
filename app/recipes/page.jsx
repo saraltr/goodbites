@@ -2,92 +2,94 @@
 
 import { useState, useEffect } from "react";
 import { Select } from "antd";
+import AddToFavorites from "@/components/FavButton";
+import { useAuth } from "@/contexts/AuthContext";
+
 
 export default function RecipesPage() {
-  // Recipes + pagination
+  const { user } = useAuth();
+  // recipes + pagination
   const [recipes, setRecipes] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [limit, setLimit] = useState(20);
 
-  // Filters
-  const [query, setQuery] = useState(""); // 🔍 Combined name + ingredient search
+  // filters
+  const [query, setQuery] = useState(""); // combined name + ingredient search
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [diet, setDiet] = useState("");
 
-  // UI state
+  // ui state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch categories once
+  // fetch categories once
   useEffect(() => {
     async function loadCategories() {
       try {
-        const res = await fetch("https://www.themealdb.com/api/json/v1/1/list.php?c=list");
+        const res = await fetch(
+          "https://www.themealdb.com/api/json/v1/1/list.php?c=list"
+        );
         const data = await res.json();
         if (data.meals) setCategories(data.meals);
       } catch (err) {
-        console.error("Failed to load categories:", err);
+        console.error("failed to load categories:", err);
       }
     }
     loadCategories();
   }, []);
 
-  // Fetch recipes whenever filters or page/limit change
+  // fetch recipes whenever filters, page, or limit change
   useEffect(() => {
-    fetchRecipes();
-  }, [page, limit]);
+    async function fetchRecipes() {
+      setLoading(true);
+      setError("");
 
-  // Fetch recipes
-  const fetchRecipes = async () => {
-    setLoading(true);
-    setError("");
+      const params = new URLSearchParams();
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+      if (query) params.append("query", query);
+      if (selectedCategories.length > 0)
+        params.append("categories", selectedCategories.join(","));
+      if (diet) params.append("diet", diet);
 
-    const params = new URLSearchParams();
-    params.append("page", page);
-    params.append("limit", limit);
+      try {
+        const response = await fetch(`/api/recipes?${params.toString()}`);
+        const data = await response.json();
 
-    if (query) params.append("query", query);
-
-    if (selectedCategories.length > 0) {
-      params.append("categories", selectedCategories.join(","));
-    }
-
-    if (diet) params.append("diet", diet);
-
-    try {
-      const response = await fetch(`/api/recipes?${params.toString()}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        setRecipes([]);
-        setError("No recipes found. Try another search.");
-      } else {
-        setRecipes(data.meals || []);
-        setTotalPages(data.totalPages || 1);
+        if (!response.ok) {
+          setRecipes([]);
+          setError("No recipes found. Try another search.");
+        } else {
+          setRecipes(data.meals || []);
+          setTotalPages(data.totalPages || 1);
+        }
+      } catch (err) {
+        console.error("error fetching recipes:", err);
+        setError("something went wrong.");
       }
-    } catch (err) {
-      console.error("Error fetching recipes:", err);
-      setError("Something went wrong.");
+
+      setLoading(false);
     }
 
-    setLoading(false);
-  };
+    fetchRecipes();
+  }, [page, limit, query, selectedCategories, diet]);
 
-  // Apply filters
+  // apply filters (resets page to 1)
   const applyFilters = () => {
     setPage(1);
-    fetchRecipes();
   };
 
   return (
     <main className="p-8 bg-[#fafaf8] min-h-screen">
       <h1 className="text-4xl font-bold text-[#2e7d32] mb-6">Find Recipes</h1>
 
-      {/* 🔍 Combined Search */}
+      {/* 🔍 combined search */}
       <div className="mb-6 flex flex-col items-start gap-2">
-        <label className="text-gray-900 font-semibold">Search by Name or Ingredient</label>
+        <label className="text-gray-900 font-semibold">
+          Search by Name or Ingredient
+        </label>
         <input
           type="text"
           placeholder="e.g. Chicken, Rice, Pasta…"
@@ -99,9 +101,11 @@ export default function RecipesPage() {
         />
       </div>
 
-      {/* 🗂 Multi-select Category Filter (AntD) */}
+      {/* 🗂 multi-select category filter */}
       <div className="mb-6 w-full max-w-md">
-        <label className="text-gray-900 font-semibold mb-2 block">Categories</label>
+        <label className="text-gray-900 font-semibold mb-2 block">
+          Categories
+        </label>
 
         <Select
           mode="multiple"
@@ -120,7 +124,7 @@ export default function RecipesPage() {
         />
       </div>
 
-      {/* APPLY FILTERS */}
+      {/* apply filters */}
       <button
         onClick={applyFilters}
         className="bg-green-600 hover:bg-green-700 text-white font-semibold 
@@ -129,14 +133,12 @@ export default function RecipesPage() {
         Apply Filters
       </button>
 
-      {/* Dietary + Recipes Per Page */}
+      {/* dietary + recipes per page */}
       <div className="mb-6 flex flex-col md:flex-row gap-10">
-        {/* Dietary Filters */}
         <div>
           <label className="block text-gray-900 font-semibold mb-2">
             Dietary Preference
           </label>
-
           <div className="flex gap-6 flex-wrap">
             {[
               { label: "None", value: "" },
@@ -158,12 +160,10 @@ export default function RecipesPage() {
           </div>
         </div>
 
-        {/* Recipes Per Page */}
         <div>
           <label className="block text-gray-900 font-semibold mb-2">
             Recipes Per Page
           </label>
-
           <select
             value={limit}
             onChange={(e) => {
@@ -181,32 +181,40 @@ export default function RecipesPage() {
         </div>
       </div>
 
-      {/* LOADING */}
+      {/* loading */}
       {loading && (
         <div className="flex justify-center my-10">
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-green-600"></div>
         </div>
       )}
 
-      {/* ERROR */}
+      {/* error */}
       {!loading && error && (
         <p className="text-center text-red-600 font-medium text-lg">{error}</p>
       )}
 
-      {/* RECIPES GRID */}
+      {/* recipes grid */}
       {!loading && !error && recipes.length > 0 && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {recipes.map((recipe) => (
               <div
                 key={recipe.idMeal}
-                className="bg-white rounded-2xl shadow-md hover:shadow-lg transition overflow-hidden"
+                className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition overflow-hidden"
               >
                 <img
                   src={recipe.strMealThumb || "/images/placeholder-food.jpg"}
                   alt={recipe.strMeal}
                   className="w-full h-48 object-cover"
                 />
+
+                {/* add to favorites button */}
+                {/* only show the button if user is logged in */}
+                {user && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <AddToFavorites mealId={recipe.idMeal} />
+                  </div>
+                )}
 
                 <div className="p-4">
                   <h2 className="text-lg font-semibold text-gray-900">
@@ -216,9 +224,8 @@ export default function RecipesPage() {
                     {recipe.strCategory} • {recipe.strArea}
                   </p>
                   <p className="text-sm text-gray-700 mt-2">
-                    💲 {recipe.estimatedCost} • 🔥 {recipe.nutrition.calories} cal
+                    💲 {recipe.estimatedCost} • 🔥 {recipe.nutrition?.calories} cal
                   </p>
-
                   <a
                     href={`/recipe/${recipe.idMeal}`}
                     className="text-green-600 hover:underline text-sm font-medium"
@@ -230,7 +237,7 @@ export default function RecipesPage() {
             ))}
           </div>
 
-          {/* PAGINATION */}
+          {/* pagination */}
           <div className="flex justify-center items-center gap-4 mt-10">
             <button
               onClick={() => setPage((p) => Math.max(p - 1, 1))}

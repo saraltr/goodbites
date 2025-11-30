@@ -39,21 +39,21 @@ export interface DayMeals {
   }[];
 }
 
-// weekly meal plan
-export interface WeekMeals {
-  monday?: { id: string; name: string }[];
-  tuesday?: { id: string; name: string }[];
-  wednesday?: { id: string; name: string }[];
-  thursday?: { id: string; name: string }[];
-  friday?: { id: string; name: string }[];
-  saturday?: { id: string; name: string }[];
-  sunday?: { id: string; name: string }[];
+// saved meal plans
+export interface Meal {
+  originalId: string;
+  title: string;
+  cost: number;
+  fullCost: number;
+  includeSeasonal: boolean;
 }
 
-// meals subcollection document
-export interface MealsWeekDoc {
-  weekId: string;
-  meals: WeekMeals;
+export interface Menu {
+  id: string;
+  mode: string;
+  budget: number;
+  createdAt: Date | string;
+  meals: Meal[];
 }
 
 export interface ReviewFormProps {
@@ -97,12 +97,15 @@ export interface MealDetails {
 }
 // meal object shape
 export interface MealDB {
+  firestoreId: string;
   idMeal: string;
   strMeal: string;
   strCategory: string;
   strMealThumb: string;
   [key: `strIngredient${number}`]: string | null;
   [key: `strMeasure${number}`]: string | null;
+  strArea: string;
+  strTags: string;
 }
 
 

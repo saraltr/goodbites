@@ -77,8 +77,33 @@ export default function MealPlanner() {
     setLoading(false);
   };
 
-  const handleConfirmMenu = () => {
-    // should send the save menu to firebase if the user is logged in
+    async function handleConfirmMenu() {
+    // send the save menu to firebase if the user is logged in
+    const filteredMeals = plannerData.meals.map(meal => ({
+      originalId: meal.originalId,
+      title: meal.title,
+      cost: meal.cost,
+      fullCost: meal.fullCost,
+      includeSeasonal: meal.includeSeasonal,
+    }));
+
+    await fetch("/api/menu", {
+      method: "POST",
+      headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(
+      {budget:(plannerData.budget), 
+        mode:(plannerData.mode),
+        meals:(filteredMeals)
+      },
+    )
+    })
+
+    // debug
+    // const data = await res.json();
+    // console.log(data);
+
   };
 
 return (

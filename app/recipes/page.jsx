@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { Select } from "antd";
 import AddToFavorites from "@/components/FavButton";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 export default function RecipesPage() {
+  const { user } = useAuth();
   // recipes + pagination
   const [recipes, setRecipes] = useState([]);
   const [page, setPage] = useState(1);
@@ -207,9 +209,12 @@ export default function RecipesPage() {
                 />
 
                 {/* add to favorites button */}
-              <div className="absolute top-2 right-2 z-10">
-                <AddToFavorites mealId={recipe.idMeal} />
-              </div>
+                {/* only show the button if user is logged in */}
+                {user && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <AddToFavorites mealId={recipe.idMeal} />
+                  </div>
+                )}
 
                 <div className="p-4">
                   <h2 className="text-lg font-semibold text-gray-900">

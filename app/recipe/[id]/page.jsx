@@ -5,9 +5,11 @@ import { useParams } from "next/navigation";
 import ReviewList from "@/components/ReviewList";
 import ReviewForm from "@/components/ReviewForm";
 import AddToFavorites from "@/components/FavButton";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 export default function RecipeDetail() {
+  const { user } = useAuth();
   const { id } = useParams();
   const [recipe, setRecipe] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -98,9 +100,12 @@ export default function RecipeDetail() {
           />
 
           {/* add to favorites button */}
+          {/* only display fav button if the user logged in */}
+          {user && (
           <div className="absolute top-3 right-3 z-10">
             <AddToFavorites mealId={id} />
           </div>
+        )}
         </div>
         <p className="text-gray-700 mb-6">{recipe.strInstructions}</p>
 

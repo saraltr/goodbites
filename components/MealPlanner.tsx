@@ -4,13 +4,16 @@ import Link from "next/link";
 import Image from "next/image";
 import fetchMeals from "@/lib/fetchMeals";
 import { MealResult } from "@/lib/types";
-import { Row, Col, Card, Button, Select, InputNumber, Badge, Tabs, Divider, Tag, Empty, Form } from "antd";
+import { Row, Col, Card, Button, Select, InputNumber, Badge, Tabs, Divider, Tag, Empty, Form, Tooltip } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 const { Option } = Select;
 import MenuInfo from "./MenuInfo";
+import { useAuth } from "@/contexts/AuthContext";
+
 
 export default function MealPlanner() {
+  const { user } = useAuth();
   const [plannerData, setPlannerData] = useLocalStorage<{
     mode: "daily" | "weekly";
     budget: number;
@@ -74,33 +77,8 @@ export default function MealPlanner() {
     setLoading(false);
   };
 
-  async function handleConfirmMenu() {
+  const handleConfirmMenu = () => {
     // should send the save menu to firebase if the user is logged in
-
-    const filteredMeals = plannerData.meals.map(meal => ({
-      originalId: meal.originalId,
-      title: meal.title,
-      cost: meal.cost,
-      fullCost: meal.fullCost,
-      includeSeasonal: meal.includeSeasonal,
-    }));
-
-    const res = await fetch("/api/menu", {
-      method: "POST",
-      headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(
-      {budget:(plannerData.budget), 
-        mode:(plannerData.mode),
-        meals:(filteredMeals)
-      },
-    )
-    })
-
-    const data = await res.json();
-    console.log(data);
-
   };
 
 return (
@@ -146,9 +124,11 @@ return (
         </Col>
 
         <Col>
-          <Button type="primary" onClick={handleConfirmMenu}>
+        <Tooltip title={!user ? "Log in to save your menu!" : ""}>
+          <Button type="primary" onClick={handleConfirmMenu} disabled={!user}>
             Confirm Menu
           </Button>
+        </Tooltip>
         </Col>
         <Col>
         <Button

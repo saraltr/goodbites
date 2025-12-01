@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.1.0",
     "antd": "^5.29.1",
     "firebase": "^12.6.0",
     "firebase-admin": "^13.6.0",

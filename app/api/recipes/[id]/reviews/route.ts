@@ -53,7 +53,7 @@ export async function POST(
         );
         userId = decoded.uid;
         userName = decoded.name || "Anonymous";
-      } catch (err) {
+      } catch (_err) {
         console.warn(
           "[REVIEWS POST] Invalid session cookie, posting as anonymous"
         );
@@ -69,6 +69,23 @@ export async function POST(
     }
     if (!comment || typeof comment !== "string" || comment.length > 1000) {
       return NextResponse.json({ error: "Invalid comment" }, { status: 400 });
+    }
+
+    // Check if the user has already submitted a review for this recipe
+    if (userId) {
+      const existingReviewQuery = await db
+        .collection("reviews")
+        .where("recipeId", "==", recipeId)
+        .where("userId", "==", userId)
+        .limit(1)
+        .get();
+
+      if (!existingReviewQuery.empty) {
+        return NextResponse.json(
+          { error: "You have already reviewed this recipe" },
+          { status: 409 }
+        );
+      }
     }
 
     // 3. Create new review document

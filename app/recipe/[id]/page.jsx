@@ -1,20 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import ReviewList from "@/components/ReviewList";
 import ReviewForm from "@/components/ReviewForm";
 import AddToFavorites from "@/components/FavButton";
-import { useAuth } from "@/contexts/AuthContext";
 
 
 export default function RecipeDetail() {
-  const { user } = useAuth();
   const { id } = useParams();
+  const { user } = useAuth();
   const [recipe, setRecipe] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const userHasReviewed = useMemo(
+    () => reviews.some((review) => review.userId === user?.uid),
+    [reviews, user]
+  );
+
+  console.log("User has reviewed:", userHasReviewed, user);
 
   useEffect(() => {
     const fetchRecipeAndReviews = async () => {
@@ -23,7 +31,11 @@ export default function RecipeDetail() {
         const recipeResponse = await fetch(`/api/recipe/${id}`);
         const recipeData = await recipeResponse.json();
 
-        if (!recipeResponse.ok || !recipeData || recipeData.message === "Recipe not found") {
+        if (
+          !recipeResponse.ok ||
+          !recipeData ||
+          recipeData.message === "Recipe not found"
+        ) {
           setError("Recipe not found. Please try another one.");
           setLoading(false);
           return;
@@ -47,18 +59,21 @@ export default function RecipeDetail() {
   }, [id]);
 
   const handleReviewSubmit = (newReview) => {
-  setReviews((prev) => {
-    const updated = [newReview, ...prev];
+    setReviews((prev) => [newReview, ...prev]);
+  };
 
-    // ensure correct ordering
-    return updated.sort((a, b) => {
-      const dateA = a.createdAt?._seconds ?? a.createdAt ?? 0;
-      const dateB = b.createdAt?._seconds ?? b.createdAt ?? 0;
-      return dateB - dateA; // newest first
-    });
-  });
-};
+  const handleReviewUpdate = (updatedReview) => {
+    console.log("Updating review:", updatedReview);
+    setReviews((prev) =>
+      prev.map((review) =>
+        review.id === updatedReview.id ? updatedReview : review
+      )
+    );
+  };
 
+  const handleReviewDelete = (reviewId) => {
+    setReviews((prev) => prev.filter((review) => review.id !== reviewId));
+  };
 
   if (loading)
     return (
@@ -89,15 +104,17 @@ export default function RecipeDetail() {
 
         {/* Recipe Image */}
         <div className="relative w-full max-h-[400px] mb-6">
-          <img
-            src={
-              recipe.strMealThumb && recipe.strMealThumb.trim() !== ""
-                ? recipe.strMealThumb
-                : "/images/placeholder-food.jpg"
-            }
-            alt={recipe.strMeal || "Recipe image"}
-            className="w-full max-h-[400px] object-cover rounded-xl shadow"
-          />
+        <Image
+          src={
+            recipe.strMealThumb && recipe.strMealThumb.trim() !== ""
+              ? recipe.strMealThumb
+              : "/images/placeholder-food.jpg"
+          }
+          alt={recipe.strMeal || "Recipe image"}
+          width={500} // Set appropriate width
+          height={400} // Set appropriate height
+          className="w-full max-h-[400px] object-cover rounded-xl shadow mb-6"
+        />
 
           {/* add to favorites button */}
           {/* only display fav button if the user logged in */}
@@ -151,8 +168,15 @@ export default function RecipeDetail() {
         </div>
 
         <div className="mt-8 border-t pt-8">
-          <ReviewList reviews={reviews} />
-          <ReviewForm recipeId={id} onReviewSubmit={handleReviewSubmit} />
+          <ReviewList
+            reviews={reviews}
+            recipeId={id}
+            onReviewUpdate={handleReviewUpdate}
+            onReviewDelete={handleReviewDelete}
+          />
+          {!userHasReviewed && (
+            <ReviewForm recipeId={id} onReviewSubmit={handleReviewSubmit} />
+          )}
         </div>
       </div>
     </main>

@@ -2,10 +2,17 @@
 
 import { useEffect, useState, useRef } from "react";
 import { MealDB } from "@/lib/types";
-import { Grid, Pagination, Input, Select, Tag } from "antd";
-import RecipeCard from "./RecipeCard";
+import {
+  Grid,
+  Pagination,
+  Input,
+  Select,
+  Tag,
+  message as MessageToast,
+} from "antd";
+import RecipeCard from "@/components/RecipeCard";
 
-export default function UserFavs() {
+export default function FavoritesPage() {
   const [favs, setFavs] = useState<MealDB[]>([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -13,24 +20,36 @@ export default function UserFavs() {
   const pageSize = 6;
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const screens = Grid.useBreakpoint();
   const cols = screens.xl ? 3 : 2;
 
   const listRef = useRef<HTMLDivElement>(null);
 
+  const getFavorites = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/favorites");
+      const data = await res.json();
+      setFavs(data.recipes || []);
+    } catch (error) {
+      MessageToast.error("Failed to load favorites.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch("/api/favorites")
-      .then((r) => r.json())
-      .then((data) => setFavs(data.recipes || []));
+    getFavorites();
   }, []);
 
-  const deleteFavsAction = async (id:string) => {
+  const deleteFavsAction = async (id: string) => {
     setMessage(null);
     setError(null);
 
     const response = await fetch(`/api/favorites?id=${id}`, {
-      method: "DELETE"
+      method: "DELETE",
     });
 
     const data = await response.json().catch(() => null);
@@ -41,10 +60,10 @@ export default function UserFavs() {
       return;
     }
 
-    setFavs(f => f.filter(fav => fav.firestoreId !== id));
+    setFavs((f) => f.filter((fav) => fav.firestoreId !== id));
     setMessage(data?.message);
     setTimeout(() => setMessage(null), 5000);
-  }
+  };
 
   // filtering
   const filtered = favs.filter((recipe) => {
@@ -76,25 +95,20 @@ export default function UserFavs() {
     })),
   ];
 
-  if (favs.length === 0) {
-    return <p>No favorites added yet</p>;
-  }
-
   return (
-    <>
-
-    {/* feedback messages */}
-      {message &&
-      <p>
+    <div className="max-w-7xl mx-auto px-6 py-4">
+      {/* feedback messages */}
+      {message && (
+        <p>
           <Tag color="success" style={{ marginBottom: 12 }}>
-              {message}
+            {message}
           </Tag>
-      </p>
-      }
+        </p>
+      )}
       {error && (
-          <Tag color="error" style={{ marginBottom: 12 }}>
+        <Tag color="error" style={{ marginBottom: 12 }}>
           {error}
-          </Tag>
+        </Tag>
       )}
       {/* filter */}
       <div className="flex flex-col md:flex-row gap-3 my-4">
@@ -119,41 +133,55 @@ export default function UserFavs() {
         />
       </div>
 
-      {/* grid */}
-      <div
-        ref={listRef}
-        className="my-4"
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${cols}, 1fr)`,
-          gap: 16,
-        }}
-      >
-        {paginatedFavs.map((recipe) => (
-          <RecipeCard
-            key={recipe.idMeal}
-            recipe={recipe}
-            onRemoveAction={deleteFavsAction}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex justify-center my-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-green-600"></div>
+        </div>
+      ) : favs.length > 0 ? (
+        <>
+          {/* grid */}
+          <div
+            ref={listRef}
+            className="my-4"
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              gap: 16,
+            }}
+          >
+            {paginatedFavs.map((recipe) => (
+              <RecipeCard
+                key={recipe.idMeal}
+                recipe={recipe}
+                onRemoveAction={deleteFavsAction}
+              />
+            ))}
+          </div>
 
-      {/* pagination */}
-      <div className="flex justify-center my-6">
-        <Pagination
-          current={currentPage}
-          total={filtered.length}
-          pageSize={pageSize}
-          onChange={(page) => {
-            setCurrentPage(page);
-            listRef.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          }}
-          showSizeChanger={false}
-        />
-      </div>
-    </>
+          {/* pagination */}
+          <div className="flex justify-center my-6">
+            <Pagination
+              current={currentPage}
+              total={filtered.length}
+              pageSize={pageSize}
+              onChange={(page) => {
+                setCurrentPage(page);
+                listRef.current?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }}
+              showSizeChanger={false}
+            />
+          </div>
+        </>
+      ) : (
+        <p>
+          {filtered.length
+            ? `No favorites match the current filters.`
+            : `No favorites added yet.`}
+        </p>
+      )}
+    </div>
   );
 }

@@ -79,8 +79,8 @@ export default function RecipesPage() {
   const applyFilters = () => setPage(1);
 
   return (
-    <main className="p-8 bg-[#fafaf8] min-h-screen">
-      <h1 className="text-4xl font-bold text-[#2e7d32] mb-6">Find Recipes</h1>
+    <main className="p-8 min-h-screen max-w-7xl mx-auto">
+      <h1 className="text-4xl font-bold text-primary mb-6">Find Recipes</h1>
 
       {/* Search */}
       <div className="mb-6 flex flex-col items-start gap-2">
@@ -142,7 +142,10 @@ export default function RecipesPage() {
               { label: "Vegan", value: "vegan" },
               { label: "Low Fat", value: "low-fat" },
             ].map((item) => (
-              <label key={item.value} className="flex items-center gap-2 text-gray-900">
+              <label
+                key={item.value}
+                className="flex items-center gap-2 text-gray-900"
+              >
                 <input
                   type="radio"
                   name="diet"
@@ -218,7 +221,8 @@ export default function RecipesPage() {
                   {recipe.strCategory} • {recipe.strArea}
                 </p>
                 <p className="text-sm text-gray-700 mt-2">
-                  💲 {recipe.estimatedCost} • 🔥 {recipe.nutrition?.calories} cal
+                  💲 {recipe.estimatedCost} • 🔥 {recipe.nutrition?.calories}{" "}
+                  cal
                 </p>
                 <a
                   href={`/recipe/${recipe.idMeal}`}

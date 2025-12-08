@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { auth } from "@/utils/FirebaseConfig";
 import { useRouter } from "next/navigation";
-import { Avatar, Dropdown } from "antd";
+import { Avatar, Dropdown, Menu } from "antd";
 import type { MenuProps } from "antd";
 
 export default function Navbar() {

@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Select } from "antd";
 import AddToFavorites from "@/components/FavButton";
 import { useAuth } from "@/contexts/AuthContext";
+import ScrollToTop from "@/components/ScrollToTop";
+import Image from "next/image";
 
 export default function RecipesPage() {
   const { user } = useAuth();
@@ -200,11 +202,18 @@ export default function RecipesPage() {
               key={recipe.idMeal}
               className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition overflow-hidden"
             >
-              <img
-                src={recipe.strMealThumb || "/images/placeholder-food.jpg"}
-                alt={recipe.strMeal}
-                className="w-full h-48 object-cover"
-              />
+              <div className="relative w-full h-48">
+  <Image
+    src={recipe.strMealThumb || "/images/placeholder-food.jpg"}
+    alt={recipe.strMeal}
+    fill
+    loading="lazy"
+    sizes="(max-width: 768px) 100vw,
+           (max-width: 1024px) 50vw,
+           25vw"
+    className="object-cover rounded-md"
+  />
+</div>
 
               {/* Add to favorites only if user is logged in */}
               {user && (
@@ -270,6 +279,7 @@ export default function RecipesPage() {
           </button>
         </div>
       )}
+      <ScrollToTop/>
     </main>
   );
 }

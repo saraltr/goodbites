@@ -28,16 +28,18 @@ export default function FavoritesPage() {
   const listRef = useRef<HTMLDivElement>(null);
 
   const getFavorites = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/favorites");
-      const data = await res.json();
-      setFavs(data.recipes || []);
-    } catch (error) {
-      MessageToast.error("Failed to load favorites.");
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    fetch("/api/favorites")
+      .then((r) => r.json())
+      .then((data) => {
+        setFavs(data.recipes || []);
+      })
+      .catch(() => {
+        MessageToast.error("Failed to load favorites.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   useEffect(() => {

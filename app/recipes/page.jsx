@@ -81,7 +81,7 @@ export default function RecipesPage() {
   const applyFilters = () => setPage(1);
 
   return (
-    <main className="p-8 min-h-screen max-w-7xl mx-auto">
+    <main className="p-8 bg-[#fafaf8] min-h-screen w-full">
       <h1 className="text-4xl font-bold text-primary mb-6">Find Recipes</h1>
 
       {/* Search */}

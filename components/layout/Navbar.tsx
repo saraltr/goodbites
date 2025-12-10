@@ -35,6 +35,7 @@ export default function Navbar() {
         <div className="flex flex-col">
           <Link href="/profile">
           <span>{user?.displayName}</span>
+          <br />
           <span className="text-gray-500">{user?.email}</span>
           </Link>
         </div>
@@ -64,7 +65,7 @@ export default function Navbar() {
         </Link>
 
         {/* NAV LINKS */}
-        <div className="hidden md:flex flex items-center gap-8 text-black font-medium">
+        <div className="hidden md:flex flex items-center gap-8 text-black font-medium text-green-600">
           <Link href="/planner">Meal Planner</Link>
           <Link href="/recipes">Recipes</Link>
           <Link href="/about">About</Link>

@@ -33,8 +33,10 @@ export default function Navbar() {
       key: "1",
       label: (
         <div className="flex flex-col">
+          <Link href="/profile">
           <span>{user?.displayName}</span>
           <span className="text-gray-500">{user?.email}</span>
+          </Link>
         </div>
       ),
     },

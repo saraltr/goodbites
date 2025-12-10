@@ -1,16 +1,30 @@
 "use client";
 
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import StarRating from './StarRating';
-import { ReviewFormProps} from '@/lib/types';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import StarRating from "./StarRating";
+import { Review, ReviewFormProps } from "@/lib/types";
+import { on } from "events";
+import { message } from "antd";
 
-export default function ReviewForm({ recipeId, onReviewSubmit }: ReviewFormProps) {
+export default function ReviewForm({
+  recipeId,
+  existingReview,
+  onReviewSubmit,
+  onCancel,
+}: ReviewFormProps) {
   const { user } = useAuth();
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (existingReview) {
+      setRating(existingReview.rating);
+      setComment(existingReview.comment);
+    }
+  }, [existingReview]);
 
   const getErrorMessage = (err: unknown) => {
     return err instanceof Error ? err.message : "An unexpected error occurred.";
@@ -19,35 +33,43 @@ export default function ReviewForm({ recipeId, onReviewSubmit }: ReviewFormProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rating === 0) {
-      setError('Please select a rating.');
+      setError("Please select a rating.");
       return;
     }
-    if (comment.trim() === '') {
-      setError('Please enter a comment.');
+    if (comment.trim() === "") {
+      setError("Please enter a comment.");
       return;
     }
 
     setSubmitting(true);
-    setError('');
+    setError("");
+
+    const url = existingReview
+      ? `/api/reviews/${existingReview.id}`
+      : `/api/recipes/${recipeId}/reviews`;
+    const method = existingReview ? "PUT" : "POST";
 
     try {
-      const response = await fetch(`/api/recipes/${recipeId}/reviews`, {
-        method: 'POST',
+      const response = await fetch(url, {
+        method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ rating, comment }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to submit review.');
+        throw new Error(data.error || "Failed to submit review.");
       }
 
-      const newReview = await response.json();
-      onReviewSubmit(newReview);
+      const result = { ...existingReview, rating, comment } as Review;
+
+      message.success(existingReview ? "Review updated!" : "Review submitted!");
+
+      onReviewSubmit(result);
       setRating(0);
-      setComment('');
+      setComment("");
     } catch (err: unknown) {
       setError(getErrorMessage(err));
     } finally {
@@ -58,21 +80,31 @@ export default function ReviewForm({ recipeId, onReviewSubmit }: ReviewFormProps
   if (!user) {
     return (
       <div className="mt-8 p-4 border rounded-lg bg-gray-50 text-center">
-        <p>Please <a href="/login" className="text-green-600 hover:underline">log in</a> to leave a review.</p>
+        <p>
+          Please{" "}
+          <a href="/login" className="text-green-600 hover:underline">
+            log in
+          </a>{" "}
+          to leave a review.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="mt-8">
-      <h3 className="text-xl text-[#2e7d32] font-semibold mb-4">Leave a Review</h3>
+      <h3 className="text-xl text-primary font-semibold mb-4">
+        {existingReview ? "Edit Your Review" : "Leave a Review"}
+      </h3>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-gray-700 mb-2">Your Rating</label>
           <StarRating rating={rating} setRating={setRating} />
         </div>
         <div className="mb-4">
-          <label htmlFor="comment" className="block text-gray-700 mb-2">Your Comment</label>
+          <label htmlFor="comment" className="block text-gray-700 mb-2">
+            Your Comment
+          </label>
           <textarea
             id="comment"
             value={comment}
@@ -83,13 +115,30 @@ export default function ReviewForm({ recipeId, onReviewSubmit }: ReviewFormProps
           />
         </div>
         {error && <p className="text-red-500 mb-4">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
-        >
-          {submitting ? 'Submitting...' : 'Submit Review'}
-        </button>
+        <div className="flex items-center justify-end gap-4">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+          >
+            {submitting
+              ? existingReview
+                ? "Updating..."
+                : "Submitting..."
+              : existingReview
+              ? "Update"
+              : "Submit"}
+          </button>
+          {!!onCancel && (
+            <button
+              type="button"
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
+              onClick={onCancel}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </form>
     </div>
   );

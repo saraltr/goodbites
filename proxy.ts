@@ -5,7 +5,6 @@ import type { NextRequest } from 'next/server';
 export async function proxy(req: NextRequest) {
   const session = req.cookies.get('__session');
   const { pathname } = req.nextUrl;
-  const url = req.nextUrl.clone();
 
   // protected route prefixes
   const protectedRoutes = ["/profile"];

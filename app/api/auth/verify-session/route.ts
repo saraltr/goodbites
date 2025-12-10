@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
     const decodedClaims = await authAdmin.verifySessionCookie(sessionCookie, true);
     return NextResponse.json({ user: decodedClaims }, { status: 200 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Invalid session cookie.' }, { status: 401 });
   }
 }

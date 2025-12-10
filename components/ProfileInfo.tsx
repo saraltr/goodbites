@@ -15,6 +15,7 @@ import { FirestoreUser } from "@/lib/types";
 import UserMenu from "./UserMenu";
 import UserFavs from "./UserFavorites";
 
+
 export default function ProfileInfo() {
   // get user id from url params
   const params = useParams();

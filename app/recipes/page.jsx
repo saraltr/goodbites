@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { Select } from "antd";
 import AddToFavorites from "@/components/FavButton";
 import { useAuth } from "@/contexts/AuthContext";
-
+import ScrollToTop from "@/components/ScrollToTop";
+import Image from "next/image";
 
 export default function RecipesPage() {
   const { user } = useAuth();
+
   // recipes + pagination
   const [recipes, setRecipes] = useState([]);
   const [page, setPage] = useState(1);
@@ -15,7 +17,7 @@ export default function RecipesPage() {
   const [limit, setLimit] = useState(20);
 
   // filters
-  const [query, setQuery] = useState(""); // combined name + ingredient search
+  const [query, setQuery] = useState("");
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [diet, setDiet] = useState("");
@@ -76,16 +78,13 @@ export default function RecipesPage() {
     fetchRecipes();
   }, [page, limit, query, selectedCategories, diet]);
 
-  // apply filters (resets page to 1)
-  const applyFilters = () => {
-    setPage(1);
-  };
+  const applyFilters = () => setPage(1);
 
   return (
-    <main className="p-8 bg-[#fafaf8] min-h-screen">
-      <h1 className="text-4xl font-bold text-[#2e7d32] mb-6">Find Recipes</h1>
+    <main className="p-8 min-h-screen max-w-7xl mx-auto">
+      <h1 className="text-4xl font-bold text-primary mb-6">Find Recipes</h1>
 
-      {/* 🔍 combined search */}
+      {/* Search */}
       <div className="mb-6 flex flex-col items-start gap-2">
         <label className="text-gray-900 font-semibold">
           Search by Name or Ingredient
@@ -101,12 +100,11 @@ export default function RecipesPage() {
         />
       </div>
 
-      {/* 🗂 multi-select category filter */}
+      {/* Categories */}
       <div className="mb-6 w-full max-w-md">
         <label className="text-gray-900 font-semibold mb-2 block">
           Categories
         </label>
-
         <Select
           mode="multiple"
           allowClear
@@ -124,7 +122,7 @@ export default function RecipesPage() {
         />
       </div>
 
-      {/* apply filters */}
+      {/* Apply Filters */}
       <button
         onClick={applyFilters}
         className="bg-green-600 hover:bg-green-700 text-white font-semibold 
@@ -133,7 +131,7 @@ export default function RecipesPage() {
         Apply Filters
       </button>
 
-      {/* dietary + recipes per page */}
+      {/* Dietary + Recipes per page */}
       <div className="mb-6 flex flex-col md:flex-row gap-10">
         <div>
           <label className="block text-gray-900 font-semibold mb-2">
@@ -146,7 +144,10 @@ export default function RecipesPage() {
               { label: "Vegan", value: "vegan" },
               { label: "Low Fat", value: "low-fat" },
             ].map((item) => (
-              <label key={item.value} className="flex items-center gap-2 text-gray-900">
+              <label
+                key={item.value}
+                className="flex items-center gap-2 text-gray-900"
+              >
                 <input
                   type="radio"
                   name="diet"
@@ -181,96 +182,104 @@ export default function RecipesPage() {
         </div>
       </div>
 
-      {/* loading */}
+      {/* Loading */}
       {loading && (
         <div className="flex justify-center my-10">
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-green-600"></div>
         </div>
       )}
 
-      {/* error */}
+      {/* Error */}
       {!loading && error && (
         <p className="text-center text-red-600 font-medium text-lg">{error}</p>
       )}
 
-      {/* recipes grid */}
+      {/* Recipes Grid */}
       {!loading && !error && recipes.length > 0 && (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {recipes.map((recipe) => (
-              <div
-                key={recipe.idMeal}
-                className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition overflow-hidden"
-              >
-                <img
-                  src={recipe.strMealThumb || "/images/placeholder-food.jpg"}
-                  alt={recipe.strMeal}
-                  className="w-full h-48 object-cover"
-                />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {recipes.map((recipe) => (
+            <div
+              key={recipe.idMeal}
+              className="relative bg-white rounded-2xl shadow-md hover:shadow-lg transition overflow-hidden"
+            >
+              <div className="relative w-full h-48">
+  <Image
+    src={recipe.strMealThumb || "/images/placeholder-food.jpg"}
+    alt={recipe.strMeal}
+    fill
+    loading="lazy"
+    sizes="(max-width: 768px) 100vw,
+           (max-width: 1024px) 50vw,
+           25vw"
+    className="object-cover rounded-md"
+  />
+</div>
 
-                {/* add to favorites button */}
-                {/* only show the button if user is logged in */}
-                {user && (
-                  <div className="absolute top-2 right-2 z-10">
-                    <AddToFavorites mealId={recipe.idMeal} />
-                  </div>
-                )}
-
-                <div className="p-4">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    {recipe.strMeal}
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    {recipe.strCategory} • {recipe.strArea}
-                  </p>
-                  <p className="text-sm text-gray-700 mt-2">
-                    💲 {recipe.estimatedCost} • 🔥 {recipe.nutrition?.calories} cal
-                  </p>
-                  <a
-                    href={`/recipe/${recipe.idMeal}`}
-                    className="text-green-600 hover:underline text-sm font-medium"
-                  >
-                    View Recipe →
-                  </a>
+              {/* Add to favorites only if user is logged in */}
+              {user && (
+                <div className="absolute top-2 right-2 z-10">
+                  <AddToFavorites mealId={recipe.idMeal} />
                 </div>
+              )}
+
+              <div className="p-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {recipe.strMeal}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {recipe.strCategory} • {recipe.strArea}
+                </p>
+                <p className="text-sm text-gray-700 mt-2">
+                  💲 {recipe.estimatedCost} • 🔥 {recipe.nutrition?.calories}{" "}
+                  cal
+                </p>
+                <a
+                  href={`/recipe/${recipe.idMeal}`}
+                  className="text-green-600 hover:underline text-sm font-medium"
+                >
+                  View Recipe →
+                </a>
               </div>
-            ))}
-          </div>
-
-          {/* pagination */}
-          <div className="flex justify-center items-center gap-4 mt-10">
-            <button
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              disabled={page === 1}
-              className={`px-5 py-2 rounded-xl font-semibold transition
-                ${
-                  page === 1
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-green-600 text-white hover:bg-green-700 hover:scale-105"
-                }`}
-            >
-              ← Previous
-            </button>
-
-            <span className="text-lg font-bold text-gray-900">
-              Page {page} / {totalPages}
-            </span>
-
-            <button
-              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-              disabled={page === totalPages}
-              className={`px-5 py-2 rounded-xl font-semibold transition
-                ${
-                  page === totalPages
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-green-600 text-white hover:bg-green-700 hover:scale-105"
-                }`}
-            >
-              Next →
-            </button>
-          </div>
-        </>
+            </div>
+          ))}
+        </div>
       )}
+
+      {/* Pagination */}
+      {!loading && !error && recipes.length > 0 && (
+        <div className="flex justify-center items-center gap-4 mt-10">
+          <button
+            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            disabled={page === 1}
+            className={`px-5 py-2 rounded-xl font-semibold transition
+              ${
+                page === 1
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-green-600 text-white hover:bg-green-700 hover:scale-105"
+              }`}
+          >
+            ← Previous
+          </button>
+
+          <span className="text-lg font-bold text-gray-900">
+            Page {page} / {totalPages}
+          </span>
+
+          <button
+            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+            disabled={page === totalPages}
+            className={`px-5 py-2 rounded-xl font-semibold transition
+              ${
+                page === totalPages
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-green-600 text-white hover:bg-green-700 hover:scale-105"
+              }`}
+          >
+            Next →
+          </button>
+        </div>
+      )}
+      <ScrollToTop/>
     </main>
   );
 }

@@ -13,6 +13,7 @@ import { FirebaseError } from "firebase/app";
 import Modal from "@/components/Modal";
 import { FirestoreUser } from "@/lib/types";
 import UserMenu from "./UserMenu";
+import UserFavs from "./UserFavorites";
 
 
 export default function ProfileInfo() {
@@ -320,7 +321,9 @@ if (!profileUser && !loading)
             </div>
           </aside>
 
-          
+          <main className="w-full">
+            <UserFavs />
+          </main>
 
         </div>
       </div>

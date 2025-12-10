@@ -4,12 +4,15 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { auth } from "@/utils/FirebaseConfig";
 import { useRouter } from "next/navigation";
-import { Avatar, Dropdown } from "antd";
+import { Avatar, Drawer, Dropdown } from "antd";
 import type { MenuProps } from "antd";
+import { useState } from "react";
 
 export default function Navbar() {
   const router = useRouter();
   const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [openUserMenu, setOpenUserMenu] = useState(false);
 
   const handleLogout = async (): Promise<void> => {
     try {
@@ -59,9 +62,10 @@ export default function Navbar() {
         </Link>
 
         {/* NAV LINKS */}
-        <div className="flex items-center gap-8 text-gray-800 font-medium">
+        <div className="hidden md:flex flex items-center gap-8 text-black font-medium">
           <Link href="/planner">Meal Planner</Link>
           <Link href="/recipes">Recipes</Link>
+          <Link href="/about">About</Link>
 
           {user ? (
             <Dropdown menu={{ items }} placement="bottomRight">
@@ -78,7 +82,76 @@ export default function Navbar() {
             </Link>
           )}
         </div>
+        {/* Mobile menu button */}
+        <button
+          className="md:hidden text-3xl text-black"
+          onClick={() => setOpen(true)}
+
+        >
+          ☰
+        </button>
       </div>
+
+      <Drawer placement="right" open={open} onClose={() => setOpen(false)} width={280}>
+      <div className="flex flex-col gap-6 text-lg">
+          <Link href="/planner" onClick={() => setOpen(false)}>
+            Meal Planner
+          </Link>
+          <Link href="/recipes" onClick={() => setOpen(false)}>
+            Recipes
+          </Link>
+          <Link href="/about" onClick={() => setOpen(false)}>
+            About
+          </Link>
+
+          {user ? (
+            <div className="mt-6">
+              {/* MOBILE PROFILE HEADER */}
+              <div
+                className="flex items-center justify-between cursor-pointer bg-gray-100 p-3 rounded-xl"
+                onClick={() => setOpenUserMenu(!openUserMenu)}
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar className="bg-green-600 text-white">
+                    {user.displayName?.[0]?.toUpperCase()}
+                  </Avatar>
+                  <div className="flex flex-col text-sm">
+                    <span className="font-semibold">{user?.displayName}</span>
+                    <span className="text-gray-500">{user?.email}</span>
+                  </div>
+                </div>
+                <span className="text-gray-600 text-xl">{openUserMenu ? "▴" : "▾"}</span>
+              </div>
+
+              {/* MOBILE COLLAPSIBLE PROFILE MENU */}
+              {openUserMenu && (
+                <div className="mt-4 ml-2 flex flex-col gap-4 text-base border-l-2 border-gray-300 pl-4">
+                  <Link href="/profile" onClick={() => setOpen(false)}>
+                    Profile
+                  </Link>
+                  <Link href="/profile/favorites" onClick={() => setOpen(false)}>
+                    Favorites
+                  </Link>
+                  <Link href="/profile/edit" onClick={() => setOpen(false)}>
+                    Edit Profile
+                  </Link>
+                  <button onClick={handleLogout} className="text-left text-red-500">
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              onClick={() => setOpen(false)}
+              className="px-5 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 w-fit"
+            >
+              Sign In
+            </Link>
+          )}
+        </div>
+      </Drawer>
     </nav>
   );
 }

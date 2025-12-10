@@ -10,26 +10,32 @@ The **Good Bites** is a meal planning platform that aims to help users plan thei
 
 1. **Recipe Database**
 
-   - Includes ingredients, preparation steps, cost estimates, images, and nutritional information.
+   - Uses recipes from TheMealDBand adds extra information like seasonal ingredients, all-year ingredients, cost, and nutrition.
 
 2. **Menu Generator**
 
-   - Generates meal plans based on user budget and seasonal ingredients.
+   - Generates personalized meal plans based on user budget, seasonal ingredients, and ingredient reuse to reduce waste.
+   - Prioritizes seasonal meals; remaining meals are selected randomly, avoiding duplicates while staying within budget.
+   - Tracks ingredients across multiple meals to minimize waste and save money.
 
 3. **Recipe Search**
 
-   - Allows users to search recipes by name, category, or ingredients.
+   - Search recipes by title or ingredient (e.g., Chicken, Rice, Pasta).
+   - Filter by categories and dietary preferences (Vegetarian, Vegan, Low Fat, or None).
 
-4. **“What’s in Your Fridge?”**
+4. **Recipe Pages & Reviews**
 
-   - Users can input available ingredients to find matching recipes.
+   - Single recipe pages display full recipe details.
+   - Authenticated users can leave star ratings and reviews, edit their reviews, or delete them.
 
 5. **User Accounts**
 
-   - Enables registration, login, and saving of favorite recipes or meal plans.
+   - Registration and login system.
+   - Users can save favorite recipes, store generated meal plans, and edit their profile information (username and email).
 
-6. **Ingredient Tracker**
-   - Tracks near-expiry ingredients to help users prioritize their use in meal suggestions.
+6. **IAbout Page**
+   - Educates users about the platform’s mission to reduce food waste, promote healthy eating, and manage food budgets.
+
 
 ---
 
@@ -38,17 +44,17 @@ The **Good Bites** is a meal planning platform that aims to help users plan thei
 ### **Front-End**
 
 - **Next.js**
-- **Tailwind CSS** or **NativeWind**
+- **Tailwind CSS** and **Ant design**
 
 ### **Back-End**
 
-- **Next.js API Routes**
-- **Prisma ORM** with **PostgreSQL**
+- **Next.js API Routes** - Handles all server-side logic and endpoints.
+- **Firestore Database** – Stores user data, including favorite recipes and saved meal plans, in documents for easy retrieval and updates.
 
 ### **Authentication**
 
-- **Firebase Authentication**
-- **Firestore**
+- **Firebase Authentication** - Manages user registration, login, and secure access.
+- **Firestore** - Stores user-related data such as profile information, favorite recipes, and saved meal plans.
 
 ### **Deployment**
 

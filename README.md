@@ -10,7 +10,7 @@ The **Good Bites** is a meal planning platform that aims to help users plan thei
 
 1. **Recipe Database**
 
-   - Uses recipes from TheMealDBand adds extra information like seasonal ingredients, all-year ingredients, cost, and nutrition.
+   - Uses recipes from TheMealDB and adds extra information like seasonal ingredients, all-year ingredients, cost, and nutrition.
 
 2. **Menu Generator**
 
@@ -33,7 +33,7 @@ The **Good Bites** is a meal planning platform that aims to help users plan thei
    - Registration and login system.
    - Users can save favorite recipes, store generated meal plans, and edit their profile information (username and email).
 
-6. **IAbout Page**
+6. **About Page**
    - Educates users about the platform’s mission to reduce food waste, promote healthy eating, and manage food budgets.
 
 
